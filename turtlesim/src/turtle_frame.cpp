@@ -38,21 +38,23 @@
 #define DEFAULT_BG_R 0x45
 #define DEFAULT_BG_G 0x56
 #define DEFAULT_BG_B 0xff
+#define DEFAULT_SIZE 800
+#define DEFAULT_PNG "roads.png"
 
 namespace turtlesim
 {
 
 TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
 : QFrame(parent, f)
-, path_image_(500, 500, QImage::Format_ARGB32)
+, path_image_(QImage(QString(ros::package::getPath("turtlesim").c_str())+QString("/images/")+QString(DEFAULT_PNG)).scaled(DEFAULT_SIZE, DEFAULT_SIZE, Qt::KeepAspectRatio))
 , path_painter_(&path_image_)
 , frame_count_(0)
 , id_counter_(0)
 , private_nh_("~")
 {
-  setFixedSize(500, 500);
+  setFixedSize(DEFAULT_SIZE, DEFAULT_SIZE);
   setWindowTitle("TurtleSim");
-
+  QImage start_image_ = path_image_;
   srand(time(NULL));
 
   update_timer_ = new QTimer(this);
@@ -72,6 +74,11 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   if (!private_nh_.hasParam("background_b"))
   {
     private_nh_.setParam("background_b", DEFAULT_BG_B);
+  }
+  if (!private_nh_.hasParam("background_png"))
+  {
+  	std::string png_path_default = ros::package::getPath("turtlesim")+"/images/"+ DEFAULT_PNG;
+    private_nh_.setParam("background_png", png_path_default);
   }
 
   QVector<QString> turtles;
@@ -204,12 +211,14 @@ void TurtleFrame::clear()
   int r = DEFAULT_BG_R;
   int g = DEFAULT_BG_G;
   int b = DEFAULT_BG_B;
-
+  std::string png_path = ros::package::getPath("turtlesim")+"/images/"+ DEFAULT_PNG;
   private_nh_.param("background_r", r, r);
   private_nh_.param("background_g", g, g);
   private_nh_.param("background_b", b, b);
-
+  private_nh_.param("background_png", png_path, png_path);
   path_image_.fill(qRgb(r, g, b));
+  path_painter_.setCompositionMode(QPainter::CompositionMode_SourceOver);
+  path_painter_.drawImage(0, 0, QImage(png_path.c_str()).scaled(DEFAULT_SIZE, DEFAULT_SIZE, Qt::KeepAspectRatio));
   update();
 }
 
