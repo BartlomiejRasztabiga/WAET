@@ -52,6 +52,8 @@ Turtle::Turtle(const ros::NodeHandle& nh, const QImage& turtle_image, const QPoi
 {
   pen_.setWidth(3);
 
+  Pose pose_;
+
   velocity_sub_ = nh_.subscribe("cmd_vel", 1, &Turtle::velocityCallback, this);
   pose_pub_ = nh_.advertise<Pose>("pose", 1);
   color_pub_ = nh_.advertise<Color>("color_sensor", 1);
@@ -180,7 +182,7 @@ bool Turtle::update(double dt, QPainter& path_painter, const QImage& path_image,
   p.linear_velocity = std::sqrt(lin_vel_x_ * lin_vel_x_ + lin_vel_y_ * lin_vel_y_);
   p.angular_velocity = ang_vel_;
   pose_pub_.publish(p);
-
+  pose_ = p;
   // Figure out (and publish) the color underneath the turtle
   {
     Color color;
@@ -209,6 +211,11 @@ bool Turtle::update(double dt, QPainter& path_painter, const QImage& path_image,
   }
 
   return modified;
+}
+
+Pose Turtle::getPose()
+{
+  return pose_;
 }
 
 void Turtle::paint(QPainter& painter)

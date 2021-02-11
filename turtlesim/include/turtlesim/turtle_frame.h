@@ -41,6 +41,8 @@
 # include <std_srvs/Empty.h>
 # include <turtlesim/Spawn.h>
 # include <turtlesim/Kill.h>
+# include <turtlesim/GetTurtles.h>
+# include <turtlesim/GetPose.h>
 # include <map>
 
 # include "turtle.h"
@@ -74,7 +76,8 @@ private:
   bool resetCallback(std_srvs::Empty::Request&, std_srvs::Empty::Response&);
   bool spawnCallback(turtlesim::Spawn::Request&, turtlesim::Spawn::Response&);
   bool killCallback(turtlesim::Kill::Request&, turtlesim::Kill::Response&);
-
+  bool getTurtlesCallback(turtlesim::GetTurtles::Request&, turtlesim::GetTurtles::Response&);
+  bool getPoseCallback(turtlesim::GetPose::Request&, turtlesim::GetPose::Response&);
   ros::NodeHandle nh_;
   ros::NodeHandle private_nh_;
   QTimer* update_timer_;
@@ -89,7 +92,8 @@ private:
   ros::ServiceServer reset_srv_;
   ros::ServiceServer spawn_srv_;
   ros::ServiceServer kill_srv_;
-
+  ros::ServiceServer get_turtles_srv_;
+  ros::ServiceServer get_pose_srv_;
   typedef std::map<std::string, TurtlePtr> M_Turtle;
   M_Turtle turtles_;
   uint32_t id_counter_;

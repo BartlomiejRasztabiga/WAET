@@ -113,6 +113,8 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   reset_srv_ = nh_.advertiseService("reset", &TurtleFrame::resetCallback, this);
   spawn_srv_ = nh_.advertiseService("spawn", &TurtleFrame::spawnCallback, this);
   kill_srv_ = nh_.advertiseService("kill", &TurtleFrame::killCallback, this);
+  get_turtles_srv_ = nh_.advertiseService("get_turtles", &TurtleFrame::getTurtlesCallback, this);
+  get_pose_srv_ = nh_.advertiseService("get_pose", &TurtleFrame::getPoseCallback, this);
 
   ROS_INFO("Starting turtlesim with node name %s", ros::this_node::getName().c_str()) ;
 
@@ -222,12 +224,31 @@ void TurtleFrame::clear()
   update();
 }
 
+bool TurtleFrame::getTurtlesCallback(turtlesim::GetTurtles::Request& req, turtlesim::GetTurtles::Response& res)
+{
+	std::map<std::string, TurtlePtr>::iterator it;
+
+	for (it = turtles_.begin(); it != turtles_.end(); it++)
+	{
+
+	    std::cout << it->first  << std::endl;
+	    res.list.push_back(it->first );
+	}
+	return true;
+}
+
+bool TurtleFrame::getPoseCallback(turtlesim::GetPose::Request& req, turtlesim::GetPose::Response& res)
+{
+	TurtlePtr t = turtles_[req.name];
+	res.pose = t->getPose();
+	return true;
+}
+
 void TurtleFrame::onUpdate()
 {
   ros::spinOnce();
 
   updateTurtles();
-
   if (!ros::ok())
   {
     close();

@@ -60,6 +60,7 @@ public:
 
   bool update(double dt, QPainter& path_painter, const QImage& path_image, qreal canvas_width, qreal canvas_height);
   void paint(QPainter &painter);
+  Pose getPose();
 private:
   void velocityCallback(const geometry_msgs::Twist::ConstPtr& vel);
   bool setPenCallback(turtlesim::SetPen::Request&, turtlesim::SetPen::Response&);
@@ -75,6 +76,7 @@ private:
 
   QPointF pos_;
   qreal orient_;
+  Pose pose_;
 
   qreal lin_vel_x_;
   qreal lin_vel_y_;

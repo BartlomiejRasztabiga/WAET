@@ -16,7 +16,10 @@ add_service_files(DIRECTORY srv FILES
                   SetPen.srv
                   Spawn.srv
                   TeleportAbsolute.srv
-                  TeleportRelative.srv)
+                  TeleportRelative.srv
+                  GetPose.srv
+                  GetTurtles.srv
+                  GetSonar.srv)
 generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs)
 
 catkin_package(CATKIN_DEPENDS geometry_msgs message_runtime std_msgs std_srvs)
