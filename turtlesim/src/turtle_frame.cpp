@@ -231,7 +231,6 @@ bool TurtleFrame::getTurtlesCallback(turtlesim::GetTurtles::Request& req, turtle
 	for (it = turtles_.begin(); it != turtles_.end(); it++)
 	{
 
-	    std::cout << it->first  << std::endl;
 	    res.list.push_back(it->first );
 	}
 	return true;

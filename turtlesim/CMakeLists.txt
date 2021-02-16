@@ -6,6 +6,8 @@ find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation roscons
 find_package(Qt5Widgets REQUIRED)
 find_package(Boost REQUIRED COMPONENTS thread)
 
+catkin_python_setup()
+
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
@@ -21,6 +23,7 @@ add_service_files(DIRECTORY srv FILES
                   GetTurtles.srv
                   GetSonar.srv)
 generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs)
+
 
 catkin_package(CATKIN_DEPENDS geometry_msgs message_runtime std_msgs std_srvs)
 
