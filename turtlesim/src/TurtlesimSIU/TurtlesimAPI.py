@@ -2,22 +2,21 @@
 # encoding: utf8
 import rospy
 import turtlesim
-# from turtlesim.msg import *
-# from turtlesim.srv import * #GetTurtles, GetPose, Spawn, GetSonar
-# from turtlesim.msg import *
+from turtlesim.msg import *
 
 class ColorSensor():
 	def __init__(self, owner):
 		isinstance(owner, str)
 		self.owner = owner
 		topic_name="/"+owner+"/color_sensor"
+		self.color = turtlesim.msg.Color()
 		rospy.Subscriber(topic_name, turtlesim.msg.Color, self.topic_callback)
 	
 	def topic_callback(self, data):
-		self.colour = data
+		self.color = data
 
 	def check(self):
-		return self.colour
+		return self.color
 
 class TurtlesimSIU():
 	"""docstr for TurtlesimSIU"""
