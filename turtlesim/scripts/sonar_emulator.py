@@ -9,21 +9,64 @@ import copy
 
 global turtle_map
 turtle_map = {"names": [], "poses": []}
+ 
 
 def hasInNames(names, name):
   for y in names:
     if y == name:
       return True
   return False
-def removeByRange(range, turtles, reference):
+def getTurtlesByRange(max_range,min_range, turtles, reference):
   ref_id = turtles["names"].index(reference)
+  i =0
+  dist_map=[]
   for record in turtles["poses"]:
+    print "poses: ",turtles["poses"]
     dist = math.sqrt(math.pow(record.x - turtles["poses"][ref_id].x, 2)+math.pow(record.y - turtles["poses"][ref_id].y, 2))
-    print dist
-  return dist
+    print "dist: ",dist
+    if dist >= min_range and dist <= max_range:
+      dist_map.append({'name': turtles["names"][i],'id': i, 'distance': math.sqrt(math.pow(record.x - turtles["poses"][ref_id].x, 2)+math.pow(record.y - turtles["poses"][ref_id].y, 2))
+                       , 'x': record.x, 'y':record.y})
+    i= i +1
+  return dist_map
+
+def inDirection(fov_range, fov_center, in_range, reference):
+  global turtle_map
+  ref_id = turtle_map["names"].index(reference)
+  print "ref_id= ", ref_id
+  found_list=[]
+  for record in in_range:
+    diff_y = record['y']-turtle_map["poses"][ref_id].y
+    diff_x = record['x']-turtle_map["poses"][ref_id].x
+    direction = math.atan2(diff_y, diff_x)- turtle_map["poses"][ref_id].theta 
+    if(direction > math.pi):
+      direction -= 2*math.pi
+    if(direction < -math.pi):
+      direction += 2*math.pi
+    print "direction: ", direction
+    if direction >= fov_center-fov_range and direction <= fov_center+fov_range:
+      print "found!: ", record['name'] 
+      found_list.append(record)
+  return found_list
+
 def sonar_callback(req):
   global turtle_map
-  removeByRange(10, turtle_map, "turtle1")
+  response = turtlesim.srv.GetSonarResponse()
+  in_range = getTurtlesByRange(max_range=req.range, min_range=-req.range,turtles=turtle_map, reference=req.name)
+  print in_range
+  found_list = inDirection(req.fov_range, req.fov_center, in_range, req.name)
+  closest = None
+  print "found_list, ", found_list
+  for record in found_list:
+    print found_list
+    if closest == None:
+      closest = record
+    elif record['distance'] < closest['distance']:
+      closest = record
+  response.closest = closest['distance']
+  return response
+
+
   # response = turtlesim.srv.GetSonarResponse()
   # req.fov
   # req.range
@@ -69,6 +112,11 @@ if __name__ == '__main__':
               turtle_map["names"].append(name)
               turtle_map["poses"].append(get_pose(pose_req).pose)
               print turtle_map
+            else:
+              # print "IDX: ", turtle_map["names"].index(name)
+              # print "POSE: ", get_pose(name).pose
+              turtle_map["poses"][turtle_map["names"].index(name)]=get_pose(name).pose
+
           i = 0
           for record in turtle_map["names"]:
             if record not in turtle_list.list:

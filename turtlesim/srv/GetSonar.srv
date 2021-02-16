@@ -1,5 +1,6 @@
-float32 fov
+float32 fov_center
+float32 fov_range
 float32 range
-Pose pose
+string name
 ---
-float32 nearest
+float32 closest
