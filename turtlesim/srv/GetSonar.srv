@@ -1,6 +1,7 @@
 float32 fov_center
 float32 fov_range
-float32 range
+float32 range_min
+float32 range_max
 string name
 ---
 float32 closest

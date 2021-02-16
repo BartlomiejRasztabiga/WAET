@@ -52,18 +52,21 @@ def inDirection(fov_range, fov_center, in_range, reference):
 def sonar_callback(req):
   global turtle_map
   response = turtlesim.srv.GetSonarResponse()
-  in_range = getTurtlesByRange(max_range=req.range, min_range=-req.range,turtles=turtle_map, reference=req.name)
+  in_range = getTurtlesByRange(max_range=req.range_min, min_range=req.range_max,turtles=turtle_map, reference=req.name)
   print in_range
   found_list = inDirection(req.fov_range, req.fov_center, in_range, req.name)
   closest = None
   print "found_list, ", found_list
-  for record in found_list:
-    print found_list
-    if closest == None:
-      closest = record
-    elif record['distance'] < closest['distance']:
-      closest = record
-  response.closest = closest['distance']
+  if len(found_list) > 0:
+    for record in found_list:
+      print found_list
+      if closest == None:
+        closest = record
+      elif record['distance'] < closest['distance']:
+        closest = record
+    response.closest = closest['distance']
+  else:
+    response.closest = -1
   return response
 
 
