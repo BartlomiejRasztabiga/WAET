@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(turtlesim)
 
-find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation rosconsole roscpp roscpp_serialization roslib rostime std_msgs std_srvs)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation rosconsole roscpp roscpp_serialization roslib rostime std_msgs std_srvs sensor_msgs cv_bridge)
 
 find_package(Qt5Widgets REQUIRED)
 find_package(Boost REQUIRED COMPONENTS thread)
 
+find_package( OpenCV REQUIRED )
 catkin_python_setup()
-
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
@@ -21,8 +22,9 @@ add_service_files(DIRECTORY srv FILES
                   TeleportRelative.srv
                   GetPose.srv
                   GetTurtles.srv
-                  GetSonar.srv)
-generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs)
+                  GetSonar.srv
+                  GetCameraImage.srv)
+generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs sensor_msgs)
 
 
 catkin_package(CATKIN_DEPENDS geometry_msgs message_runtime std_msgs std_srvs)
@@ -40,7 +42,7 @@ qt5_wrap_cpp(turtlesim_node_MOCS ${turtlesim_node_HDRS})
 
 
 add_executable(turtlesim_node ${turtlesim_node_SRCS} ${turtlesim_node_MOCS})
-target_link_libraries(turtlesim_node Qt5::Widgets ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(turtlesim_node Qt5::Widgets ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBS})
 add_dependencies(turtlesim_node turtlesim_gencpp)
 
 add_executable(turtle_teleop_key tutorials/teleop_turtle_key.cpp)
@@ -59,3 +61,7 @@ install(TARGETS turtlesim_node turtle_teleop_key draw_square mimic
 install(DIRECTORY images
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   FILES_MATCHING PATTERN "*.png" PATTERN "*.svg")
+
+install (DIRECTORY scripts
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  FILES_MATCHING PATTERN "*.py")

@@ -25,11 +25,11 @@ def getTurtlesByRange(max_range,min_range, turtles, reference):
   i =0
   dist_map=[]
   for record in turtles["poses"]:
-    logDEBUG( "poses: ",turtles["poses"])
+    logDEBUG( "poses: "+str(turtles["poses"]))
     dist = math.sqrt(math.pow(record.x - turtles["poses"][ref_id].x, 2)+math.pow(record.y - turtles["poses"][ref_id].y, 2))
-    logDEBUG( "dist: ",dist)
-    logDEBUG( "min_range: ",min_range)
-    logDEBUG( "max_range: ",max_range)
+    logDEBUG( "dist: "+str(dist))
+    logDEBUG( "min_range: "+str(min_range))
+    logDEBUG( "max_range: "+str(max_range))
     if dist >= min_range and dist <= max_range:
       dist_map.append({'name': turtles["names"][i],'id': i, 'distance': math.sqrt(math.pow(record.x - turtles["poses"][ref_id].x, 2)+math.pow(record.y - turtles["poses"][ref_id].y, 2))
                        , 'x': record.x, 'y':record.y})
@@ -39,7 +39,7 @@ def getTurtlesByRange(max_range,min_range, turtles, reference):
 def inDirection(fov_range, fov_center, in_range, reference):
   global turtle_map
   ref_id = turtle_map["names"].index(reference)
-  logDEBUG( "ref_id= ", ref_id)
+  logDEBUG( "ref_id= "+str(ref_id))
   found_list=[]
   for record in in_range:
     diff_y = record['y']-turtle_map["poses"][ref_id].y
@@ -49,9 +49,9 @@ def inDirection(fov_range, fov_center, in_range, reference):
       direction -= 2*math.pi
     if(direction < -math.pi):
       direction += 2*math.pi
-    logDEBUG( "direction: ", direction)
+    logDEBUG( "direction: "+str(direction))
     if direction >= fov_center-fov_range and direction <= fov_center+fov_range:
-      logDEBUG( "found!: ", record['name'] )
+      logDEBUG( "found!: "+str(record['name'] ))
       found_list.append(record)
   return found_list
 
@@ -62,7 +62,8 @@ def sonar_callback(req):
   logDEBUG( in_range)
   found_list = inDirection(req.fov_range, req.fov_center, in_range, req.name)
   closest = None
-  logDEBUG( "found_list, ", found_list)
+  log = "found_list, "+ str(found_list)
+  logDEBUG( log)
   if len(found_list) > 0:
     for record in found_list:
       logDEBUG( found_list)
@@ -103,7 +104,7 @@ if __name__ == '__main__':
           i = 0
           for record in turtle_map["names"]:
             if record not in turtle_list.list:
-              logDEBUG( "remove: ", record)
+              logDEBUG( "remove: "+str(record))
               rm_id = turtle_map["names"].index(record)
               del turtle_map["names"][rm_id]
               del turtle_map["poses"][rm_id]

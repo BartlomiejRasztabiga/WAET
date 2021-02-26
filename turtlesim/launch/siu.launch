@@ -1,0 +1,5 @@
+<launch>
+	       <node pkg="turtlesim" name="sim" type="turtlesim_node"/>
+	       <node pkg="turtlesim" name="siu_interface" type="sonar_emulator.py"/>
+
+</launch>

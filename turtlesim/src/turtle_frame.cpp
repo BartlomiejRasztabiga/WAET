@@ -28,17 +28,26 @@
  */
 
 #include "turtlesim/turtle_frame.h"
+#include "turtlesim/Pose.h"
 
 #include <QPointF>
 
 #include <ros/package.h>
 #include <cstdlib>
 #include <ctime>
+#include <math.h>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
+#include <sensor_msgs/Image.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #define DEFAULT_BG_R 0x45
 #define DEFAULT_BG_G 0x56
 #define DEFAULT_BG_B 0xff
-#define DEFAULT_SIZE 800
+#define DEFAULT_WIDTH 1920
+#define DEFAULT_HEIGHT 1080
 #define DEFAULT_PNG "roads.png"
 
 namespace turtlesim
@@ -46,13 +55,13 @@ namespace turtlesim
 
 TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
 : QFrame(parent, f)
-, path_image_(QImage(QString(ros::package::getPath("turtlesim").c_str())+QString("/images/")+QString(DEFAULT_PNG)).scaled(DEFAULT_SIZE, DEFAULT_SIZE, Qt::KeepAspectRatio))
+, path_image_(QImage(QString(ros::package::getPath("turtlesim").c_str())+QString("/images/")+QString(DEFAULT_PNG)).scaled(DEFAULT_WIDTH, DEFAULT_HEIGHT, Qt::KeepAspectRatio))
 , path_painter_(&path_image_)
 , frame_count_(0)
 , id_counter_(0)
 , private_nh_("~")
 {
-  setFixedSize(DEFAULT_SIZE, DEFAULT_SIZE);
+  setFixedSize(DEFAULT_WIDTH, DEFAULT_HEIGHT);
   setWindowTitle("TurtleSim");
   QImage start_image_ = path_image_;
   srand(time(NULL));
@@ -115,6 +124,7 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   kill_srv_ = nh_.advertiseService("kill", &TurtleFrame::killCallback, this);
   get_turtles_srv_ = nh_.advertiseService("get_turtles", &TurtleFrame::getTurtlesCallback, this);
   get_pose_srv_ = nh_.advertiseService("get_pose", &TurtleFrame::getPoseCallback, this);
+  get_camera_image_srv_ = nh_.advertiseService("get_camera_image", &TurtleFrame::getCameraImageCallback, this);
 
   ROS_INFO("Starting turtlesim with node name %s", ros::this_node::getName().c_str()) ;
 
@@ -179,6 +189,127 @@ std::string TurtleFrame::spawnTurtle(const std::string& name, float x, float y, 
   return spawnTurtle(name, x, y, angle, rand() % turtle_images_.size());
 }
 
+bool TurtleFrame::getCameraImageCallback(turtlesim::GetCameraImage::Request& req, turtlesim::GetCameraImage::Response& res)
+{
+	TurtlePtr t = turtles_[req.name];
+	turtlesim::Pose pose = t->getPose();
+    ROS_ERROR("pose.theta: %f",pose.theta);
+	if (pose.theta < 0)
+	{
+		pose.theta = 2*M_PI + pose.theta;
+	}
+    ROS_ERROR("pose.theta: %f",pose.theta);
+    ROS_ERROR("cos: %f",cos(pose.theta));
+    ROS_ERROR("sin: %f",sin(pose.theta));
+    pose.y = height_in_meters_ - pose.y;
+	float x = floor(cos(pose.theta)*(pose.x+0-pose.x)*meter_ - sin(pose.theta)*(pose.y+0-pose.y)*meter_)+pose.x*meter_;
+	float y = floor(cos(pose.theta)*(pose.y+0-pose.y)*meter_ + sin(pose.theta)*(pose.x+0-pose.x)*meter_)+ pose.y*meter_;
+	QRect rect(y, x, 10*meter_, 10*meter_);
+    ROS_ERROR("x: %f | y: %f | meter: %f",x,y,meter_);
+	QPixmap original(QPixmap::fromImage(path_image_));
+	QFile file3("oryg.png");
+	file3.open(QIODevice::WriteOnly);
+	path_image_.save(&file3, "PNG");
+
+	QPixmap cropped = original.copy(rect);
+	QFile file("yourFile.png");
+	file.open(QIODevice::WriteOnly);
+	cropped.save(&file, "PNG");
+	QTransform rot_matrix;
+	rot_matrix = rot_matrix.rotateRadians(pose.theta,Qt::ZAxis);
+	// rot_matrix.rotate();
+	QImage clippedImage = path_image_.transformed(rot_matrix);//.copy(rect).transformed(rot_matrix.inverted());
+	QFile file2("yourFile2.png");
+	file2.open(QIODevice::WriteOnly);
+	clippedImage.save(&file2, "PNG");
+
+	QImage clippedImage2 = path_image_.transformed(rot_matrix).copy(rect);//.transformed(rot_matrix.inverted());
+	QFile file4("yourFile3.png");
+	file4.open(QIODevice::WriteOnly);
+	clippedImage2.save(&file4, "PNG");
+
+	cv::Mat original_cv(path_image_.height(), path_image_.width(),CV_8UC3, path_image_.bits()); 
+switch(path_image_.format()) {
+        case QImage::Format_Invalid:
+        {
+            cv::Mat empty;
+            empty.copyTo(original_cv);
+            break;
+        }
+        case QImage::Format_RGB32:
+        {
+            cv::Mat view(path_image_.height(),path_image_.width(),CV_8UC4,(void *)path_image_.constBits(),path_image_.bytesPerLine());
+            view.copyTo(original_cv);
+            break;
+        }
+        case QImage::Format_RGB888:
+        {
+            cv::Mat view(path_image_.height(),path_image_.width(),CV_8UC3,(void *)path_image_.constBits(),path_image_.bytesPerLine());
+            cvtColor(view, original_cv, cv::COLOR_RGB2BGR);
+            break;
+        }
+        default:
+        {
+            QImage conv = path_image_.convertToFormat(QImage::Format_ARGB32);
+            cv::Mat view(conv.height(),conv.width(),CV_8UC4,(void *)conv.constBits(),conv.bytesPerLine());
+            view.copyTo(original_cv);
+            break;
+        }
+    }
+	// cv::imshow("image",original_cv);
+	// cv::waitKey();
+
+	cv::Point2f center (pose.x*meter_,pose.y*meter_);
+	cv::Mat rot_mat = cv::getRotationMatrix2D (center, -pose.theta*180/M_PI,1);
+	int frame_size = 200;
+	float boundary = sqrt(frame_size*frame_size+frame_size*frame_size);
+	float target_width =original_cv.cols+2*boundary;
+	cv::Mat dst;
+	int borderType = cv::BORDER_CONSTANT;
+	cv::copyMakeBorder( original_cv, dst, boundary, boundary, boundary, boundary, borderType, cv::Scalar(0,0,0) );
+
+	// cv::imshow("dst",dst);
+
+ //    cv::Rect rectBefore(0, 0, dst.cols, dst.rows);
+ //    cv::Rect rectAfter(10, 10, dst.cols, dst.rows);
+ //    cv::Mat dbg1 = dst.clone();
+ //    // cv::rectangle(dbg1, rectBefore, cv::Scalar(0,255,0), 2);
+	// cv::imshow("dbg1",dbg1);
+ //    cv::Mat roiBefore = dst(rectBefore).clone();  // Copy the data in the source position
+	// cv::imshow("roiBefore",roiBefore);
+ //    cv::Mat roiAfter = dst(rectAfter); 
+	// cv::imshow("roiAfter",roiAfter);
+ //    roiBefore.copyTo(roiAfter);
+ //    cv::Mat dbg2 = dst.clone();
+ //    // rectangle(dbg2, rectAfter, cv::Scalar(0,0,255), 2);
+
+	// cv::imshow("dbg2",dbg2);
+
+
+	cv::Rect myROI(pose.x*meter_,pose.y*meter_-100, frame_size, frame_size);
+	// cv::imshow("image",dst);
+	// cv::waitKey();
+	cv::warpAffine(original_cv, dst,rot_mat, dst.size());
+	// auto image_rect = cv::Rect({}, dst.size());
+	// auto intersection =  myROI &image_rect ;
+	// auto inter_roi = intersection - myROI.tl();
+	// cv::Mat crop = cv::Mat::zeros(myROI.size(), dst.type());
+	// dst(intersection).copyTo(crop(inter_roi));
+	cv::Mat croppedImage = dst(myROI);
+	// cv::imshow("dst2",croppedImage);
+	cv_bridge::CvImage img_bridge;
+	sensor_msgs::Image img_msg; // >> message to be sent
+
+	std_msgs::Header header; // empty header
+	header.seq = 0; // user defined counter
+	header.stamp = ros::Time::now(); // time
+	img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, croppedImage);
+	img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
+
+	res.image = img_msg;
+	return true;
+}
+
 std::string TurtleFrame::spawnTurtle(const std::string& name, float x, float y, float angle, size_t index)
 {
   std::string real_name = name;
@@ -220,7 +351,7 @@ void TurtleFrame::clear()
   private_nh_.param("background_png", png_path, png_path);
   path_image_.fill(qRgb(r, g, b));
   path_painter_.setCompositionMode(QPainter::CompositionMode_SourceOver);
-  path_painter_.drawImage(0, 0, QImage(png_path.c_str()).scaled(DEFAULT_SIZE, DEFAULT_SIZE, Qt::KeepAspectRatio));
+  path_painter_.drawImage(0, 0, QImage(png_path.c_str()).scaled(DEFAULT_WIDTH, DEFAULT_HEIGHT, Qt::KeepAspectRatio));
   update();
 }
 
