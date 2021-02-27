@@ -6,11 +6,13 @@ from turtlesim.msg import Pose
 from turtlesim.srv  import SetPenRequest
 from TurtlesimSIU import TurtlesimSIU 
 from geometry_msgs.msg import Twist
+from sensor_msgs.msg import Image
 import math
 
 if __name__ == "__main__":
     # Initialize ROS node
     rospy.init_node('siu_example', anonymous=False)
+    img_publisher = rospy.Publisher('/siu_img', Image, queue_size=10)
     turtle_api = TurtlesimSIU.TurtlesimSIU()
     color_api = TurtlesimSIU.ColorSensor('turtle1')
     rate = rospy.Rate(1)
@@ -40,5 +42,7 @@ if __name__ == "__main__":
         cmd.angular.z = 0.0 # theta
         print "CMD status: ", turtle_api.setVel('turtle2', cmd)
     	print '---------------------------------'
+        img_response = turtle_api.readCamera('turtle1')
+        img_publisher.publish(img_response)
     	rate.sleep()
         i += 1 

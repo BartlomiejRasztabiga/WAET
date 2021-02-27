@@ -34,6 +34,7 @@ class TurtlesimSIU():
 		self.get_pose = rospy.ServiceProxy('get_pose', turtlesim.srv.GetPose)
 		self.spawn = rospy.ServiceProxy('spawn', turtlesim.srv.Spawn)
 		self.get_sonar = rospy.ServiceProxy('get_sonar', turtlesim.srv.GetSonar)
+		self.get_camera_image = rospy.ServiceProxy('get_camera_image', turtlesim.srv.GetCameraImage)
 		self.vel_publishers = []
 
 	def getPose(self, turtle_name):

@@ -238,18 +238,21 @@ switch(path_image_.format()) {
         }
         case QImage::Format_RGB32:
         {
+		    ROS_ERROR("format: Format_RGB32");
             cv::Mat view(path_image_.height(),path_image_.width(),CV_8UC4,(void *)path_image_.constBits(),path_image_.bytesPerLine());
             view.copyTo(original_cv);
             break;
         }
         case QImage::Format_RGB888:
         {
+		    ROS_ERROR("format: Format_RGB888");
             cv::Mat view(path_image_.height(),path_image_.width(),CV_8UC3,(void *)path_image_.constBits(),path_image_.bytesPerLine());
             cvtColor(view, original_cv, cv::COLOR_RGB2BGR);
             break;
         }
         default:
         {
+		    ROS_ERROR("format: Format_ARGB32");
             QImage conv = path_image_.convertToFormat(QImage::Format_ARGB32);
             cv::Mat view(conv.height(),conv.width(),CV_8UC4,(void *)conv.constBits(),conv.bytesPerLine());
             view.copyTo(original_cv);
@@ -259,16 +262,15 @@ switch(path_image_.format()) {
 	// cv::imshow("image",original_cv);
 	// cv::waitKey();
 
-	cv::Point2f center (pose.x*meter_,pose.y*meter_);
-	cv::Mat rot_mat = cv::getRotationMatrix2D (center, -pose.theta*180/M_PI,1);
 	int frame_size = 200;
 	float boundary = sqrt(frame_size*frame_size+frame_size*frame_size);
 	float target_width =original_cv.cols+2*boundary;
 	cv::Mat dst;
 	int borderType = cv::BORDER_CONSTANT;
 	cv::copyMakeBorder( original_cv, dst, boundary, boundary, boundary, boundary, borderType, cv::Scalar(0,0,0) );
-
-	// cv::imshow("dst",dst);
+	cv::Rect myROI_initial(pose.x*meter_,pose.y*meter_, 2*boundary, 2*boundary);
+	cv::Mat dst_cropped = dst(myROI_initial);
+	cv::imshow("dst_cropped",dst_cropped);
 
  //    cv::Rect rectBefore(0, 0, dst.cols, dst.rows);
  //    cv::Rect rectAfter(10, 10, dst.cols, dst.rows);
@@ -285,24 +287,30 @@ switch(path_image_.format()) {
 
 	// cv::imshow("dbg2",dbg2);
 
-
-	cv::Rect myROI(pose.x*meter_,pose.y*meter_-100, frame_size, frame_size);
+	cv::Rect myROI(boundary,boundary-100, frame_size, frame_size);
+	cv::Point2f center (boundary,boundary);
+	cv::Mat rot_mat = cv::getRotationMatrix2D (center, -pose.theta*180/M_PI,1);
+	cv::Mat dst_cropped_cropped = dst_cropped(myROI);
+	cv::imshow("dst_cropped_cropped",dst_cropped_cropped);
+	cv::Mat result;
+	dst_cropped.copyTo(result);
 	// cv::imshow("image",dst);
 	// cv::waitKey();
-	cv::warpAffine(original_cv, dst,rot_mat, dst.size());
+	cv::warpAffine(dst_cropped, result,rot_mat, dst_cropped.size());
 	// auto image_rect = cv::Rect({}, dst.size());
 	// auto intersection =  myROI &image_rect ;
 	// auto inter_roi = intersection - myROI.tl();
 	// cv::Mat crop = cv::Mat::zeros(myROI.size(), dst.type());
 	// dst(intersection).copyTo(crop(inter_roi));
-	cv::Mat croppedImage = dst(myROI);
-	// cv::imshow("dst2",croppedImage);
+	cv::Mat croppedImage = result(myROI);
+	cv::imshow("dst2",croppedImage);
 	cv_bridge::CvImage img_bridge;
 	sensor_msgs::Image img_msg; // >> message to be sent
 
 	std_msgs::Header header; // empty header
 	header.seq = 0; // user defined counter
 	header.stamp = ros::Time::now(); // time
+
 	img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, croppedImage);
 	img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
