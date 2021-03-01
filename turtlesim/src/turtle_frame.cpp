@@ -290,8 +290,8 @@ switch(path_image_.format()) {
 	cv::Rect myROI(boundary,boundary-100, frame_size, frame_size);
 	cv::Point2f center (boundary,boundary);
 	cv::Mat rot_mat = cv::getRotationMatrix2D (center, -pose.theta*180/M_PI,1);
-	cv::Mat dst_cropped_cropped = dst_cropped(myROI);
-	cv::imshow("dst_cropped_cropped",dst_cropped_cropped);
+	// cv::Mat dst_cropped_cropped = dst_cropped(myROI);
+	// cv::imshow("dst_cropped_cropped",dst_cropped_cropped);
 	cv::Mat result;
 	dst_cropped.copyTo(result);
 	// cv::imshow("image",dst);
@@ -311,7 +311,7 @@ switch(path_image_.format()) {
 	header.seq = 0; // user defined counter
 	header.stamp = ros::Time::now(); // time
 
-	img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, croppedImage);
+	img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGBA8, croppedImage);
 	img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
 	res.image = img_msg;

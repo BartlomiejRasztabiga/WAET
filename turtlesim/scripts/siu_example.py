@@ -8,11 +8,13 @@ from TurtlesimSIU import TurtlesimSIU
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 import math
+from cv_bridge import CvBridge
+import cv2
 
 if __name__ == "__main__":
     # Initialize ROS node
+    bridge = CvBridge()
     rospy.init_node('siu_example', anonymous=False)
-    img_publisher = rospy.Publisher('/siu_img', Image, queue_size=10)
     turtle_api = TurtlesimSIU.TurtlesimSIU()
     color_api = TurtlesimSIU.ColorSensor('turtle1')
     rate = rospy.Rate(1)
@@ -43,6 +45,7 @@ if __name__ == "__main__":
         print "CMD status: ", turtle_api.setVel('turtle2', cmd)
     	print '---------------------------------'
         img_response = turtle_api.readCamera('turtle1')
-        img_publisher.publish(img_response)
+        cv_image = bridge.imgmsg_to_cv2(img_response, desired_encoding='passthrough')
+        cv2.imwrite('/tmp/cv_out.jpg', cv_image) 
     	rate.sleep()
         i += 1 
