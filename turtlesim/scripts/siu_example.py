@@ -10,9 +10,16 @@ from sensor_msgs.msg import Image
 import math
 from cv_bridge import CvBridge
 import cv2
+import signal
+import sys
+
+def signal_handler(sig, frame):
+    print ("Terminating")
+    sys.exit(0)
 
 if __name__ == "__main__":
     # Initialize ROS node
+    signal.signal(signal.SIGINT, signal_handler)
     bridge = CvBridge()
     rospy.init_node('siu_example', anonymous=False)
     turtle_api = TurtlesimSIU.TurtlesimSIU()
@@ -20,33 +27,41 @@ if __name__ == "__main__":
     rate = rospy.Rate(1)
     set_pen_req = turtlesim.srv.SetPenRequest(r=255, g=255, b=255, width=5, off=0)
     #set_pen_req = turtlesim.srv.SetPenRequest(r=255, g=255, b=255, width=5, off=1)
+    if turtle_api.hasTurtle('turtle2'):
+        turtle_api.killTurtle('turtle2')
     if not turtle_api.hasTurtle('turtle2'):
         turtle_api.spawnTurtle('turtle2',turtlesim.msg.Pose(x=10,y=5,theta=0))
     k = 0
     while not rospy.is_shutdown():
-    	print 'POSE:'
-    	print '\t',turtle_api.getPose('turtle1').x
-    	print '\t',turtle_api.getPose('turtle1').y
-    	print '\t',turtle_api.getPose('turtle1').theta
-    	print '\t',turtle_api.getPose('turtle1').linear_velocity
-    	print '\t',turtle_api.getPose('turtle1').angular_velocity
-    	print 'SONAR:'
+        print 'POSE:'
+        print '\t',turtle_api.getPose('turtle1').x
+        print '\t',turtle_api.getPose('turtle1').y
+        print '\t',turtle_api.getPose('turtle1').theta
+        print '\t',turtle_api.getPose('turtle1').linear_velocity
+        print '\t',turtle_api.getPose('turtle1').angular_velocity
+        print 'SONAR:'
         #  turtle_api.readSonar( direction, FOV, min_range, max_range, turtle_name)                      
-    	print '\t',turtle_api.readSonar(0, math.pi/2, 0.5, 2,'turtle1')
-    	print 'COLOR:'
-    	print '\t',color_api.check().r
-    	print '\t',color_api.check().g
-    	print '\t',color_api.check().b
-    	print turtle_api.setPen('turtle1',set_pen_req)
+        print '\t',turtle_api.readSonar(0, math.pi/2, 0.5, 2,'turtle1')
+        print 'COLOR:'
+        print '\t',color_api.check().r
+        print '\t',color_api.check().g
+        print '\t',color_api.check().b
+        print turtle_api.setPen('turtle1',set_pen_req)
         print turtle_api.getColisions(['turtle1', 'turtle2'], 1)
         cmd = Twist()
-        cmd.linear.x = 0.0 
+        cmd.linear.x = 0.1 
         cmd.linear.y = 0.0
-        cmd.angular.z = 0.06 # theta
+        cmd.angular.z = 1.0 # theta
         if turtle_api.hasTurtle('turtle2'):
             print "CMD status: ", turtle_api.setVel('turtle2', cmd)
-    	print '---------------------------------'
-        img_response = turtle_api.readCamera(name='turtle2', frame_pixel_size = 200, cell_count=16, goal = Pose(x=10,y=5,theta=0))
+        print '---------------------------------'
+        frame_pixel_size = 200
+        # camera in front
+        x_offset = 0
+        #camera from above
+        x_offset = -frame_pixel_size/2
+        img_response = turtle_api.readCamera(name='turtle2', frame_pixel_size = frame_pixel_size, cell_count=16, x_offset=x_offset, \
+                                        goal = Pose(x=10,y=5,theta=0), show_matrix_cells_and_goal=True)
         i = 0
         print "Matrix: " 
         for row in img_response.m_rows:
@@ -59,7 +74,7 @@ if __name__ == "__main__":
                 print "\t\tDist: ", cell.distance
                 j +=1
             i += 1
-        cv_image = bridge.imgmsg_to_cv2(img_response.image, desired_encoding='passthrough')
-        cv2.imwrite('/tmp/cv_out.jpg', cv_image) 
-    	rate.sleep()
+        # cv_image = bridge.imgmsg_to_cv2(img_response.image, desired_encoding='passthrough')
+        # cv2.imwrite('/tmp/cv_out.jpg', cv_image) 
+        rate.sleep()
         k += 1 

@@ -1,7 +1,10 @@
 string name
 int16 frame_pixel_size
 int16 cell_count
+int16 x_offset
 turtlesim/Pose goal
+bool show_matrix_cells_and_goal
 ---
 sensor_msgs/Image image
 Mrow[] m_rows
+
