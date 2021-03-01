@@ -49,7 +49,8 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 #define DEFAULT_PNG "roads.png"
-
+#define DEFAULT_S_SIZE_CELLS 16
+#define CAMERA_FRAME_SIZE 200
 namespace turtlesim
 {
 
@@ -125,6 +126,7 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   get_turtles_srv_ = nh_.advertiseService("get_turtles", &TurtleFrame::getTurtlesCallback, this);
   get_pose_srv_ = nh_.advertiseService("get_pose", &TurtleFrame::getPoseCallback, this);
   get_camera_image_srv_ = nh_.advertiseService("get_camera_image", &TurtleFrame::getCameraImageCallback, this);
+  has_turtle_srv_ = nh_.advertiseService("has_turtle", &TurtleFrame::hasTurtleCallback, this);
 
   ROS_INFO("Starting turtlesim with node name %s", ros::this_node::getName().c_str()) ;
 
@@ -148,6 +150,19 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
 TurtleFrame::~TurtleFrame()
 {
   delete update_timer_;
+}
+
+bool TurtleFrame::hasTurtleCallback(turtlesim::HasTurtle::Request& req, turtlesim::HasTurtle::Response& res)
+{
+  if (hasTurtle(req.name))
+  {
+    res.result = true;
+  }
+  else
+  {
+    res.result = false;
+  }
+  return true;
 }
 
 bool TurtleFrame::spawnCallback(turtlesim::Spawn::Request& req, turtlesim::Spawn::Response& res)
@@ -262,8 +277,8 @@ switch(path_image_.format()) {
 	// cv::imshow("image",original_cv);
 	// cv::waitKey();
 
-	int frame_size = 200;
-	float boundary = sqrt(frame_size*frame_size+frame_size*frame_size);
+
+	float boundary = sqrt(req.frame_pixel_size*req.frame_pixel_size+req.frame_pixel_size*req.frame_pixel_size);
 	float target_width =original_cv.cols+2*boundary;
 	cv::Mat dst;
 	int borderType = cv::BORDER_CONSTANT;
@@ -287,7 +302,7 @@ switch(path_image_.format()) {
 
 	// cv::imshow("dbg2",dbg2);
 
-	cv::Rect myROI(boundary,boundary-100, frame_size, frame_size);
+	cv::Rect myROI(boundary,boundary-(req.frame_pixel_size/2), req.frame_pixel_size, req.frame_pixel_size);
 	cv::Point2f center (boundary,boundary);
 	cv::Mat rot_mat = cv::getRotationMatrix2D (center, -pose.theta*180/M_PI,1);
 	// cv::Mat dst_cropped_cropped = dst_cropped(myROI);
@@ -304,6 +319,65 @@ switch(path_image_.format()) {
 	// dst(intersection).copyTo(crop(inter_roi));
 	cv::Mat croppedImage = result(myROI);
 	cv::imshow("dst2",croppedImage);
+  int S_width_cells = sqrt(req.cell_count);
+  int S_cell_width_pixels = req.frame_pixel_size/S_width_cells;
+  std::vector<std::vector<cv::Scalar>> cells_colors;
+  std::vector<std::vector<float>> S_i;
+  std::vector<std::vector<std::vector<float>>> S;
+  std::vector<float> s_i_j;
+      // s_i_j[0] -- x (from red color)
+      // s_i_j[1] -- y (from blue color)
+  std::vector<float> A_i;
+  std::vector<std::vector<float>> A;
+  std::vector<float> X_i;
+  std::vector<std::vector<float>> X;
+  cv::Mat original_cv_points;
+  original_cv.copyTo(original_cv_points);
+  for (int cell_i = 0;cell_i<S_width_cells;cell_i++)
+  {
+    turtlesim::Mrow m_row;
+     for (int cell_j = 0;cell_j<S_width_cells;cell_j++)
+    {
+      turtlesim::Cell cell;
+      cv::Mat S_cell_i_j = croppedImage(cv::Rect(cell_j*S_cell_width_pixels, cell_i*S_cell_width_pixels,S_cell_width_pixels,S_cell_width_pixels));
+      float cell_x_in_turtle_frame = ((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2);
+      float cell_y_in_turtle_frame = ((S_width_cells-cell_j)*S_cell_width_pixels-S_cell_width_pixels/2);
+      float cell_center_x_in_img = pose.x*meter_ + cos(pose.theta)*(cell_x_in_turtle_frame)
+                                          + sin(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+                                          ;
+      float cell_center_y_in_img = pose.y*meter_ + cos(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+                                          - sin(pose.theta)*(cell_x_in_turtle_frame)
+                                          ;
+      // ROS_ERROR("pose.x*meter_: {%f}", (float)(pose.x*meter_));
+      // float angle = (float)(((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2));
+      // ROS_ERROR("angle scalar: {%f}", angle);
+      cv::circle(original_cv_points,cv::Point((int)cell_center_x_in_img, (int)cell_center_y_in_img), 5, cv::Scalar(0,255,0));
+      // std::string file_name = "/tmp/S_cell_"+ std::to_string(cell_i) +"_"+ std::to_string(cell_j)+".jpg";
+      // cv::imwrite(file_name, S_cell_i_j);
+      cv::Scalar mean;
+      mean = cv::mean(S_cell_i_j);
+      // mean[0] -- blue
+      // mean[1] -- green
+      // mean[2] -- red
+		  // ROS_ERROR("COLOR CELL_{%i}_{%i}: R={%f}, G={%f}, B={%f}", cell_i, cell_j, mean[2], mean[1], mean[0]);
+      // 1/50 = 0.02
+      // 1/255 = 0.00392156862
+      float r = 0.02*(float)(mean[2]-200);
+      cell.red = r;//(float)(1/(float)sqrt(50*50*2))*((float)mean[2]-200);
+      cell.blue = 0.02*(float)(mean[0]-200);
+      cell.green =  0.00392156862*(float)mean[1];
+      int goal_x = (int)req.goal.x*meter_;
+      int goal_y = (int)(height_in_meters_+1)*meter_-(int)(req.goal.y*meter_);
+      cell.distance = sqrt(pow(goal_x-cell_center_x_in_img,2)+pow(goal_y-cell_center_y_in_img,2))/meter_;
+      cv::circle(original_cv_points,cv::Point(goal_x, goal_y), 5, cv::Scalar(255,0,0));
+      m_row.cells.push_back(cell);
+		  // ROS_ERROR("CELL_{%i}_{%i}: R={%f}, G={%f}, B={%f}", cell_i, cell_j, cell.red, cell.green, cell.blue);
+		  ROS_ERROR("req.goal.x={%i}, req.goal.y={%i}", goal_x, goal_y);
+    }
+    res.m_rows.push_back(m_row);
+  }
+  cv::imshow("original_cv_points", original_cv_points);
+  // cv::imwrite("/tmp/original_cv_points.jpg", original_cv_points);
 	cv_bridge::CvImage img_bridge;
 	sensor_msgs::Image img_msg; // >> message to be sent
 

@@ -13,7 +13,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
 add_message_files(DIRECTORY msg FILES
-                  Color.msg Pose.msg)
+                  Color.msg Pose.msg Mrow.msg Cell.msg)
 add_service_files(DIRECTORY srv FILES
                   Kill.srv
                   SetPen.srv
@@ -23,7 +23,8 @@ add_service_files(DIRECTORY srv FILES
                   GetPose.srv
                   GetTurtles.srv
                   GetSonar.srv
-                  GetCameraImage.srv)
+                  GetCameraImage.srv
+                  HasTurtle.srv)
 generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs sensor_msgs)
 
 

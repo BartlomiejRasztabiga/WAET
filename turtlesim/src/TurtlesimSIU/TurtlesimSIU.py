@@ -35,6 +35,7 @@ class TurtlesimSIU():
 		self.spawn = rospy.ServiceProxy('spawn', turtlesim.srv.Spawn)
 		self.get_sonar = rospy.ServiceProxy('get_sonar', turtlesim.srv.GetSonar)
 		self.get_camera_image = rospy.ServiceProxy('get_camera_image', turtlesim.srv.GetCameraImage)
+		self.has_turtle = rospy.ServiceProxy('has_turtle', turtlesim.srv.HasTurtle)
 		self.vel_publishers = []
 
 	def getPose(self, turtle_name):
@@ -60,6 +61,10 @@ class TurtlesimSIU():
 		resp = set_pen(req)
 		return resp
 
+	def hasTurtle(self, turtle_name):
+		isinstance(turtle_name, str)
+		return self.has_turtle(turtle_name).result
+
 	def spawnTurtle(self, turtle_name, pose):
 		isinstance(pose, turtlesim.msg.Pose)
 		isinstance(turtle_name, str)
@@ -83,10 +88,12 @@ class TurtlesimSIU():
 		sonar_result = self.get_sonar(fov_center, fov_range, range_min, range_max, owner)
 		return sonar_result.closest
 
-	def readCamera(self, owner):
-		isinstance(owner, str)
-		camera_result = self.get_camera_image(owner)
-		return camera_result.image
+	def readCamera(self, name='turtle1', frame_pixel_size = 200, cell_count=16, goal=Pose()):
+		isinstance(name, str)
+		isinstance(frame_pixel_size, int)
+		isinstance(cell_count, int)
+		isinstance(goal, Pose)
+		return self.get_camera_image(name, frame_pixel_size, cell_count, goal)
 
 	def getColisions(self, names, collision_range):
 		for name in names:
