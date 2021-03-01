@@ -287,8 +287,8 @@ switch(path_image_.format()) {
 	cv::Mat dst_cropped = dst(myROI_initial);
   // Show cropped imagefor rotation
   // 
-	cv::imshow("dst_cropped",dst_cropped);
-
+	// cv::imshow("dst_cropped",dst_cropped);
+  // 
 
 	cv::Rect myROI(boundary+req.x_offset,boundary-(req.frame_pixel_size/2), req.frame_pixel_size, req.frame_pixel_size);
 	cv::Point2f center (boundary,boundary);
@@ -299,7 +299,7 @@ switch(path_image_.format()) {
 	cv::Mat croppedImage = result(myROI);
 	// Show image from the camera
   //
-  cv::imshow("dst2",croppedImage);
+  // cv::imshow("dst2",croppedImage);
   //
   int S_width_cells = sqrt(req.cell_count);
   int S_cell_width_pixels = req.frame_pixel_size/S_width_cells;
