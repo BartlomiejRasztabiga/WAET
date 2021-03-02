@@ -91,8 +91,10 @@ if __name__ == "__main__":
         x_offset = 0
         #camera from above
         # x_offset = -frame_pixel_size/2
+        # show_matrix_cells_and_goal -- show matrix cells in turtle world
+        show_matrix_cells_and_goal = True
         img_response = turtle_api.readCamera(name='turtle2', frame_pixel_size = frame_pixel_size, cell_count=16, x_offset=x_offset, \
-                                        goal = Pose(x=10,y=5,theta=0), show_matrix_cells_and_goal=True)
+                                        goal = Pose(x=10,y=5,theta=0), show_matrix_cells_and_goal=show_matrix_cells_and_goal)
         i = 0
         print "Matrix: "
         
