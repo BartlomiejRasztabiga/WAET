@@ -51,6 +51,11 @@
 #define DEFAULT_PNG "roads.png"
 #define DEFAULT_S_SIZE_CELLS 16
 #define CAMERA_FRAME_SIZE 200
+#define R_B_CENTER 200
+#define R_B_RANGE 50
+#define G_MIN 0
+#define G_MAX 255
+#define G_CENTER 0
 namespace turtlesim
 {
 
@@ -344,10 +349,12 @@ switch(path_image_.format()) {
       // mean[2] -- red
       // 1/50 = 0.02
       // 1/255 = 0.00392156862
-      float r = 0.02*(float)(mean[2]-200);
-      cell.red = r;//(float)(1/(float)sqrt(50*50*2))*((float)mean[2]-200);
-      cell.blue = 0.02*(float)(mean[0]-200);
-      cell.green =  0.00392156862*(float)mean[1];
+      float scale_RB = 1/((float)R_B_RANGE);
+      float scale_G = 1/((float)G_MAX-(float)G_CENTER);
+      float r = scale_RB*(float)(mean[2]-R_B_CENTER);
+      cell.red = r;//(float)(1/(float)sqrt(50*50*2))*((float)mean[2]-R_B_CENTER);
+      cell.blue = scale_RB*(float)(mean[0]-R_B_CENTER);
+      cell.green =  scale_G*(float)(mean[1]-(float)G_CENTER);
       int goal_x = (int)req.goal.x*meter_;
       int goal_y = (int)(height_in_meters_+1)*meter_-(int)(req.goal.y*meter_);
       cell.distance = sqrt(pow(goal_x-cell_center_x_in_img,2)+pow(goal_y-cell_center_y_in_img,2))/meter_;
