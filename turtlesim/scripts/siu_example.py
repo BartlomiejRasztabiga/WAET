@@ -64,28 +64,28 @@ if __name__ == "__main__":
         fig.colorbar(im_b,cax=cax, orientation='vertical')
         fig.tight_layout(pad=1)
     while not rospy.is_shutdown():
-        print 'POSE:'
-        print '\t',turtle_api.getPose('turtle1').x
-        print '\t',turtle_api.getPose('turtle1').y
-        print '\t',turtle_api.getPose('turtle1').theta
-        print '\t',turtle_api.getPose('turtle1').linear_velocity
-        print '\t',turtle_api.getPose('turtle1').angular_velocity
-        print 'SONAR:'
+        print ('POSE:')
+        print ('\t {}',turtle_api.getPose('turtle1').x)
+        print ('\t {}',turtle_api.getPose('turtle1').y)
+        print ('\t {}',turtle_api.getPose('turtle1').theta)
+        print( '\t {}',turtle_api.getPose('turtle1').linear_velocity)
+        print( '\t {}',turtle_api.getPose('turtle1').angular_velocity)
+        print( 'SONAR:')
         #  turtle_api.readSonar( direction, FOV, min_range, max_range, turtle_name)                      
-        print '\t',turtle_api.readSonar(0, math.pi/2, 0.5, 2,'turtle1')
-        print 'COLOR:'
-        print '\t',color_api.check().r
-        print '\t',color_api.check().g
-        print '\t',color_api.check().b
-        print turtle_api.setPen('turtle1',set_pen_req)
-        print turtle_api.getColisions(['turtle1', 'turtle2'], 1)
+        print( '\t {}',turtle_api.readSonar(0, math.pi/2, 0.5, 2,'turtle1'))
+        print( 'COLOR:')
+        print( '\t {}',color_api.check().r)
+        print( '\t {}',color_api.check().g)
+        print( '\t {}',color_api.check().b)
+        print( turtle_api.setPen('turtle1',set_pen_req))
+        print( turtle_api.getColisions(['turtle1', 'turtle2'], 1))
         cmd = Twist()
         cmd.linear.x = 0.0 
         cmd.linear.y = 0.0
         cmd.angular.z = 0.0 # theta
         if turtle_api.hasTurtle('turtle2'):
-            print "CMD status: ", turtle_api.setVel('turtle2', cmd)
-        print '---------------------------------'
+            print( "CMD status:  {}", turtle_api.setVel('turtle2', cmd))
+        print( '---------------------------------')
         frame_pixel_size = 200
         # camera in front
         x_offset = 0
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         img_response = turtle_api.readCamera(name='turtle2', frame_pixel_size = frame_pixel_size, cell_count=16, x_offset=x_offset, \
                                         goal = Pose(x=10,y=5,theta=0), show_matrix_cells_and_goal=show_matrix_cells_and_goal)
         i = 0
-        print "Matrix: "
+        print( "Matrix: ")
         
         if VISUALIZE:
             r_matrix = np.zeros((len(img_response.m_rows[0].cells),len(img_response.m_rows)))
@@ -115,12 +115,12 @@ if __name__ == "__main__":
                 r_row[j] = cell.red
                 g_row[j] = cell.green
                 b_row[j] = cell.blue
-                print "row: ", r_row
-                print "\tCELL_"+str(i)+"_"+str(j)+":" 
-                print "\t\tR: ", cell.red
-                print "\t\tG: ", cell.green
-                print "\t\tB: ", cell.blue
-                print "\t\tDist: ", cell.distance
+                print( "row:  {}", r_row)
+                print( "\tCELL_"+str(i)+"_"+str(j)+":" )
+                print( "\t\tR:  {}", cell.red)
+                print( "\t\tG:  {}", cell.green)
+                print( "\t\tB:  {}", cell.blue)
+                print( "\t\tDist:  {}", cell.distance)
                 j +=1
             r_matrix[i]=r_row
             g_matrix[i]=g_row

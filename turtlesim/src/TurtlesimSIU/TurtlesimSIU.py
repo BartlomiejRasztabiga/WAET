@@ -26,10 +26,10 @@ class TurtlesimSIU():
 	"""docstr for TurtlesimSIU"""
 	def __init__(self):
 		required_services = ['spawn', 'get_turtles', 'get_pose', 'get_sonar']
-		print "Waiting for services: ", required_services
+		print( "Waiting for services: {}", required_services)
 		for name in required_services:
 			rospy.wait_for_service(name)
-			print "Connected to: ", name
+			print( "Connected to:  {}", name)
 		self.get_turtles = rospy.ServiceProxy('get_turtles', turtlesim.srv.GetTurtles)
 		self.get_pose = rospy.ServiceProxy('get_pose', turtlesim.srv.GetPose)
 		self.spawn = rospy.ServiceProxy('spawn', turtlesim.srv.Spawn)
@@ -70,7 +70,7 @@ class TurtlesimSIU():
 		isinstance(turtle_name, str)
 		req = KillRequest()
 		req.name = turtle_name
-		print self.kill_turtle(req)
+		print( self.kill_turtle(req))
 		return 
 
 	def spawnTurtle(self, turtle_name, pose):
@@ -112,15 +112,15 @@ class TurtlesimSIU():
 		turtles =[]
 		for name in names:
 			turtles.append({'name': name, 'pose': self.getPose(name)})
-		# print 'turtles: ', turtles
+		# print( 'turtles: ', turtles
 		collisions=[]
 		for main in turtles:
 			for reference in turtles:
-				# print "main ", main['name']
-				# print "reference ", reference['name']
+				# print( "main ", main['name']
+				# print( "reference ", reference['name']
 				dist = math.sqrt(pow(main['pose'].x - reference['pose'].x,2)+pow(main['pose'].y - reference['pose'].y,2))
 				if dist > 0.01:
-					print "dist: ", dist 
+					print( "dist:  {}", dist )
 				if dist < collision_range:
 					collision = {'name1':main['name'], 'name2':reference['name']}
 					reverse_collision = {'name1':reference['name'], 'name2':main['name']}
