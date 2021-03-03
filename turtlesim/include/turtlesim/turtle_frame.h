@@ -45,6 +45,7 @@
 # include <turtlesim/GetTurtles.h>
 # include <turtlesim/GetPose.h>
 #include <turtlesim/GetCameraImage.h>
+#include <turtlesim/HasTurtle.h>
 # include <map>
 
 # include "turtle.h"
@@ -81,6 +82,7 @@ private:
   bool getTurtlesCallback(turtlesim::GetTurtles::Request&, turtlesim::GetTurtles::Response&);
   bool getPoseCallback(turtlesim::GetPose::Request&, turtlesim::GetPose::Response&);
   bool getCameraImageCallback(turtlesim::GetCameraImage::Request& req, turtlesim::GetCameraImage::Response& res);
+  bool hasTurtleCallback(turtlesim::HasTurtle::Request& req, turtlesim::HasTurtle::Response& res);
   ros::NodeHandle nh_;
   ros::NodeHandle private_nh_;
   QTimer* update_timer_;
@@ -98,6 +100,7 @@ private:
   ros::ServiceServer get_turtles_srv_;
   ros::ServiceServer get_pose_srv_;
   ros::ServiceServer get_camera_image_srv_;
+  ros::ServiceServer has_turtle_srv_;
   typedef std::map<std::string, TurtlePtr> M_Turtle;
   M_Turtle turtles_;
   uint32_t id_counter_;

@@ -49,7 +49,13 @@
 #define DEFAULT_WIDTH 1920
 #define DEFAULT_HEIGHT 1080
 #define DEFAULT_PNG "roads.png"
-
+#define DEFAULT_S_SIZE_CELLS 16
+#define CAMERA_FRAME_SIZE 200
+#define R_B_CENTER 200
+#define R_B_RANGE 50
+#define G_MIN 0
+#define G_MAX 255
+#define G_CENTER 0
 namespace turtlesim
 {
 
@@ -125,6 +131,7 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   get_turtles_srv_ = nh_.advertiseService("get_turtles", &TurtleFrame::getTurtlesCallback, this);
   get_pose_srv_ = nh_.advertiseService("get_pose", &TurtleFrame::getPoseCallback, this);
   get_camera_image_srv_ = nh_.advertiseService("get_camera_image", &TurtleFrame::getCameraImageCallback, this);
+  has_turtle_srv_ = nh_.advertiseService("has_turtle", &TurtleFrame::hasTurtleCallback, this);
 
   ROS_INFO("Starting turtlesim with node name %s", ros::this_node::getName().c_str()) ;
 
@@ -148,6 +155,19 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
 TurtleFrame::~TurtleFrame()
 {
   delete update_timer_;
+}
+
+bool TurtleFrame::hasTurtleCallback(turtlesim::HasTurtle::Request& req, turtlesim::HasTurtle::Response& res)
+{
+  if (hasTurtle(req.name))
+  {
+    res.result = true;
+  }
+  else
+  {
+    res.result = false;
+  }
+  return true;
 }
 
 bool TurtleFrame::spawnCallback(turtlesim::Spawn::Request& req, turtlesim::Spawn::Response& res)
@@ -193,40 +213,40 @@ bool TurtleFrame::getCameraImageCallback(turtlesim::GetCameraImage::Request& req
 {
 	TurtlePtr t = turtles_[req.name];
 	turtlesim::Pose pose = t->getPose();
-    ROS_ERROR("pose.theta: %f",pose.theta);
+    // ROS_ERROR("pose.theta: %f",pose.theta);
 	if (pose.theta < 0)
 	{
 		pose.theta = 2*M_PI + pose.theta;
 	}
-    ROS_ERROR("pose.theta: %f",pose.theta);
-    ROS_ERROR("cos: %f",cos(pose.theta));
-    ROS_ERROR("sin: %f",sin(pose.theta));
+    // ROS_ERROR("pose.theta: %f",pose.theta);
+    // ROS_ERROR("cos: %f",cos(pose.theta));
+    // ROS_ERROR("sin: %f",sin(pose.theta));
     pose.y = height_in_meters_ - pose.y;
-	float x = floor(cos(pose.theta)*(pose.x+0-pose.x)*meter_ - sin(pose.theta)*(pose.y+0-pose.y)*meter_)+pose.x*meter_;
-	float y = floor(cos(pose.theta)*(pose.y+0-pose.y)*meter_ + sin(pose.theta)*(pose.x+0-pose.x)*meter_)+ pose.y*meter_;
-	QRect rect(y, x, 10*meter_, 10*meter_);
-    ROS_ERROR("x: %f | y: %f | meter: %f",x,y,meter_);
-	QPixmap original(QPixmap::fromImage(path_image_));
-	QFile file3("oryg.png");
-	file3.open(QIODevice::WriteOnly);
-	path_image_.save(&file3, "PNG");
+	// float x = floor(cos(pose.theta)*(pose.x+0-pose.x)*meter_ - sin(pose.theta)*(pose.y+0-pose.y)*meter_)+pose.x*meter_;
+	// float y = floor(cos(pose.theta)*(pose.y+0-pose.y)*meter_ + sin(pose.theta)*(pose.x+0-pose.x)*meter_)+ pose.y*meter_;
+	// QRect rect(y, x, 10*meter_, 10*meter_);
+    // ROS_ERROR("x: %f | y: %f | meter: %f",x,y,meter_);
+	// QPixmap original(QPixmap::fromImage(path_image_));
+	// QFile file3("oryg.png");
+	// file3.open(QIODevice::WriteOnly);
+	// path_image_.save(&file3, "PNG");
 
-	QPixmap cropped = original.copy(rect);
-	QFile file("yourFile.png");
-	file.open(QIODevice::WriteOnly);
-	cropped.save(&file, "PNG");
-	QTransform rot_matrix;
-	rot_matrix = rot_matrix.rotateRadians(pose.theta,Qt::ZAxis);
-	// rot_matrix.rotate();
-	QImage clippedImage = path_image_.transformed(rot_matrix);//.copy(rect).transformed(rot_matrix.inverted());
-	QFile file2("yourFile2.png");
-	file2.open(QIODevice::WriteOnly);
-	clippedImage.save(&file2, "PNG");
+	// QPixmap cropped = original.copy(rect);
+	// QFile file("yourFile.png");
+	// file.open(QIODevice::WriteOnly);
+	// cropped.save(&file, "PNG");
+	// QTransform rot_matrix;
+	// rot_matrix = rot_matrix.rotateRadians(pose.theta,Qt::ZAxis);
+	// // rot_matrix.rotate();
+	// QImage clippedImage = path_image_.transformed(rot_matrix);//.copy(rect).transformed(rot_matrix.inverted());
+	// QFile file2("yourFile2.png");
+	// file2.open(QIODevice::WriteOnly);
+	// clippedImage.save(&file2, "PNG");
 
-	QImage clippedImage2 = path_image_.transformed(rot_matrix).copy(rect);//.transformed(rot_matrix.inverted());
-	QFile file4("yourFile3.png");
-	file4.open(QIODevice::WriteOnly);
-	clippedImage2.save(&file4, "PNG");
+	// QImage clippedImage2 = path_image_.transformed(rot_matrix).copy(rect);//.transformed(rot_matrix.inverted());
+	// QFile file4("yourFile3.png");
+	// file4.open(QIODevice::WriteOnly);
+	// clippedImage2.save(&file4, "PNG");
 
 	cv::Mat original_cv(path_image_.height(), path_image_.width(),CV_8UC3, path_image_.bits()); 
 switch(path_image_.format()) {
@@ -238,21 +258,21 @@ switch(path_image_.format()) {
         }
         case QImage::Format_RGB32:
         {
-		    ROS_ERROR("format: Format_RGB32");
+		    // ROS_ERROR("format: Format_RGB32");
             cv::Mat view(path_image_.height(),path_image_.width(),CV_8UC4,(void *)path_image_.constBits(),path_image_.bytesPerLine());
             view.copyTo(original_cv);
             break;
         }
         case QImage::Format_RGB888:
         {
-		    ROS_ERROR("format: Format_RGB888");
+		    // ROS_ERROR("format: Format_RGB888");
             cv::Mat view(path_image_.height(),path_image_.width(),CV_8UC3,(void *)path_image_.constBits(),path_image_.bytesPerLine());
             cvtColor(view, original_cv, cv::COLOR_RGB2BGR);
             break;
         }
         default:
         {
-		    ROS_ERROR("format: Format_ARGB32");
+		    // ROS_ERROR("format: Format_ARGB32");
             QImage conv = path_image_.convertToFormat(QImage::Format_ARGB32);
             cv::Mat view(conv.height(),conv.width(),CV_8UC4,(void *)conv.constBits(),conv.bytesPerLine());
             view.copyTo(original_cv);
@@ -262,48 +282,93 @@ switch(path_image_.format()) {
 	// cv::imshow("image",original_cv);
 	// cv::waitKey();
 
-	int frame_size = 200;
-	float boundary = sqrt(frame_size*frame_size+frame_size*frame_size);
+
+	float boundary = sqrt(req.frame_pixel_size*req.frame_pixel_size+req.frame_pixel_size*req.frame_pixel_size);
 	float target_width =original_cv.cols+2*boundary;
 	cv::Mat dst;
 	int borderType = cv::BORDER_CONSTANT;
 	cv::copyMakeBorder( original_cv, dst, boundary, boundary, boundary, boundary, borderType, cv::Scalar(0,0,0) );
 	cv::Rect myROI_initial(pose.x*meter_,pose.y*meter_, 2*boundary, 2*boundary);
 	cv::Mat dst_cropped = dst(myROI_initial);
-	cv::imshow("dst_cropped",dst_cropped);
+  // Show cropped imagefor rotation
+  // 
+	// cv::imshow("dst_cropped",dst_cropped);
+  // 
 
- //    cv::Rect rectBefore(0, 0, dst.cols, dst.rows);
- //    cv::Rect rectAfter(10, 10, dst.cols, dst.rows);
- //    cv::Mat dbg1 = dst.clone();
- //    // cv::rectangle(dbg1, rectBefore, cv::Scalar(0,255,0), 2);
-	// cv::imshow("dbg1",dbg1);
- //    cv::Mat roiBefore = dst(rectBefore).clone();  // Copy the data in the source position
-	// cv::imshow("roiBefore",roiBefore);
- //    cv::Mat roiAfter = dst(rectAfter); 
-	// cv::imshow("roiAfter",roiAfter);
- //    roiBefore.copyTo(roiAfter);
- //    cv::Mat dbg2 = dst.clone();
- //    // rectangle(dbg2, rectAfter, cv::Scalar(0,0,255), 2);
-
-	// cv::imshow("dbg2",dbg2);
-
-	cv::Rect myROI(boundary,boundary-100, frame_size, frame_size);
+	cv::Rect myROI(boundary+req.x_offset,boundary-(req.frame_pixel_size/2), req.frame_pixel_size, req.frame_pixel_size);
 	cv::Point2f center (boundary,boundary);
 	cv::Mat rot_mat = cv::getRotationMatrix2D (center, -pose.theta*180/M_PI,1);
-	cv::Mat dst_cropped_cropped = dst_cropped(myROI);
-	cv::imshow("dst_cropped_cropped",dst_cropped_cropped);
 	cv::Mat result;
 	dst_cropped.copyTo(result);
-	// cv::imshow("image",dst);
-	// cv::waitKey();
 	cv::warpAffine(dst_cropped, result,rot_mat, dst_cropped.size());
-	// auto image_rect = cv::Rect({}, dst.size());
-	// auto intersection =  myROI &image_rect ;
-	// auto inter_roi = intersection - myROI.tl();
-	// cv::Mat crop = cv::Mat::zeros(myROI.size(), dst.type());
-	// dst(intersection).copyTo(crop(inter_roi));
 	cv::Mat croppedImage = result(myROI);
-	cv::imshow("dst2",croppedImage);
+	// Show image from the camera
+  //
+  // cv::imshow("dst2",croppedImage);
+  //
+  int S_width_cells = sqrt(req.cell_count);
+  int S_cell_width_pixels = req.frame_pixel_size/S_width_cells;
+  std::vector<std::vector<cv::Scalar>> cells_colors;
+  std::vector<std::vector<float>> S_i;
+  std::vector<std::vector<std::vector<float>>> S;
+  std::vector<float> s_i_j;
+      // s_i_j[0] -- x (from red color)
+      // s_i_j[1] -- y (from blue color)
+  std::vector<float> A_i;
+  std::vector<std::vector<float>> A;
+  std::vector<float> X_i;
+  std::vector<std::vector<float>> X;
+  cv::Mat original_cv_points;
+  original_cv.copyTo(original_cv_points);
+  for (int cell_i = 0;cell_i<S_width_cells;cell_i++)
+  {
+    turtlesim::Mrow m_row;
+     for (int cell_j = 0;cell_j<S_width_cells;cell_j++)
+    {
+      turtlesim::Cell cell;
+      cv::Mat S_cell_i_j = croppedImage(cv::Rect(cell_j*S_cell_width_pixels, cell_i*S_cell_width_pixels,S_cell_width_pixels,S_cell_width_pixels));
+      float cell_x_in_turtle_frame = ((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2);
+      float cell_y_in_turtle_frame = ((S_width_cells-cell_j)*S_cell_width_pixels-S_cell_width_pixels/2);
+      float cell_center_x_in_img = pose.x*meter_ + cos(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
+                                          + sin(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+                                          ;
+      float cell_center_y_in_img = pose.y*meter_ + cos(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+                                          - sin(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
+                                          ;
+      // ROS_ERROR("pose.x*meter_: {%f}", (float)(pose.x*meter_));
+      // float angle = (float)(((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2));
+      // ROS_ERROR("angle scalar: {%f}", angle);
+      if (req.show_matrix_cells_and_goal)
+            cv::circle(original_cv_points,cv::Point((int)cell_center_x_in_img, (int)cell_center_y_in_img), 5, cv::Scalar(255,0,0));
+      // std::string file_name = "/tmp/S_cell_"+ std::to_string(cell_i) +"_"+ std::to_string(cell_j)+".jpg";
+      // cv::imwrite(file_name, S_cell_i_j);
+      cv::Scalar mean;
+      mean = cv::mean(S_cell_i_j);
+      // mean[0] -- blue
+      // mean[1] -- green
+      // mean[2] -- red
+      // 1/50 = 0.02
+      // 1/255 = 0.00392156862
+      float scale_RB = 1/((float)R_B_RANGE);
+      float scale_G = 1/((float)G_MAX-(float)G_CENTER);
+      float r = scale_RB*(float)(mean[2]-R_B_CENTER);
+      cell.red = r;//(float)(1/(float)sqrt(50*50*2))*((float)mean[2]-R_B_CENTER);
+      cell.blue = scale_RB*(float)(mean[0]-R_B_CENTER);
+      cell.green =  scale_G*(float)(mean[1]-(float)G_CENTER);
+      int goal_x = (int)req.goal.x*meter_;
+      int goal_y = (int)(height_in_meters_+1)*meter_-(int)(req.goal.y*meter_);
+      cell.distance = sqrt(pow(goal_x-cell_center_x_in_img,2)+pow(goal_y-cell_center_y_in_img,2))/meter_;
+      if (req.show_matrix_cells_and_goal)
+          cv::circle(original_cv_points,cv::Point(goal_x, goal_y), 5, cv::Scalar(0,255,0), -1);
+      m_row.cells.push_back(cell);
+		  // ROS_ERROR("CELL_{%i}_{%i}: R={%f}, G={%f}, B={%f}", cell_i, cell_j, cell.red, cell.green, cell.blue);
+		  // ROS_ERROR("req.goal.x={%i}, req.goal.y={%i}", goal_x, goal_y);
+    }
+    res.m_rows.push_back(m_row);
+  }
+  if (req.show_matrix_cells_and_goal)
+        cv::imshow("original_cv_points", original_cv_points);
+  // cv::imwrite("/tmp/original_cv_points.jpg", original_cv_points);
 	cv_bridge::CvImage img_bridge;
 	sensor_msgs::Image img_msg; // >> message to be sent
 
@@ -311,7 +376,7 @@ switch(path_image_.format()) {
 	header.seq = 0; // user defined counter
 	header.stamp = ros::Time::now(); // time
 
-	img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGB8, croppedImage);
+	img_bridge = cv_bridge::CvImage(header, sensor_msgs::image_encodings::RGBA8, croppedImage);
 	img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
 	res.image = img_msg;
