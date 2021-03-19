@@ -325,9 +325,7 @@ switch(path_image_.format()) {
   std::vector<std::vector<float>> X;
   cv::Mat original_cv_points;
   original_cv.copyTo(original_cv_points);
-
-
-  // get turtles poses
+   // get turtles poses
 
   std::map<std::string, Pose> poses;
   std::map<std::string, TurtlePtr>::iterator it;
@@ -337,21 +335,26 @@ switch(path_image_.format()) {
     if (it->first != req.name)
       poses[it->first]= it->second->getPose();
   }
-
-  for (int cell_i = 0;cell_i<S_width_cells;cell_i++)
+  
+  for (int cell_k = 0;cell_k<S_width_cells;cell_k++)
   {
     turtlesim::Mrow m_row;
      for (int cell_j = 0;cell_j<S_width_cells;cell_j++)
     {
       turtlesim::Cell cell;
-      cv::Mat S_cell_i_j = croppedImage(cv::Rect(cell_j*S_cell_width_pixels, cell_i*S_cell_width_pixels,S_cell_width_pixels,S_cell_width_pixels));
-      float cell_x_in_turtle_frame = ((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2);
-      float cell_y_in_turtle_frame = ((S_width_cells-cell_j)*S_cell_width_pixels-S_cell_width_pixels/2);
-      float cell_center_x_in_img = pose.x*meter_ + cos(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
-                                          + sin(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+      cv::Mat S_cell_i_j = croppedImage(cv::Rect((S_width_cells-cell_j-1)*S_cell_width_pixels, (S_width_cells-cell_k-1)*S_cell_width_pixels,S_cell_width_pixels,S_cell_width_pixels));
+      // if (cell_j ==0 && cell_k==0)
+      //     cv::rectangle(croppedImage, cv::Rect((S_width_cells-cell_j-1)*S_cell_width_pixels-1, (S_width_cells-cell_k-1)*S_cell_width_pixels-1,S_cell_width_pixels,S_cell_width_pixels), cv::Scalar(0, 255, 255));
+      
+      // if (req.show_matrix_cells_and_goal)
+      //       cv::imshow("croppedImage", croppedImage);
+      float cell_x_in_turtle_frame = (abs(cell_j-S_width_cells)*S_cell_width_pixels-S_cell_width_pixels/2)+req.x_offset;
+      float cell_y_in_turtle_frame = (abs(cell_k-S_width_cells)*S_cell_width_pixels-S_cell_width_pixels/2)-req.frame_pixel_size/2;
+      float cell_center_x_in_img = pose.x*meter_ + cos(pose.theta)*(cell_x_in_turtle_frame)
+                                          + sin(pose.theta)*(cell_y_in_turtle_frame)
                                           ;
-      float cell_center_y_in_img = pose.y*meter_ + cos(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
-                                          - sin(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
+      float cell_center_y_in_img = pose.y*meter_ + cos(pose.theta)*(cell_y_in_turtle_frame)
+                                          - sin(pose.theta)*(cell_x_in_turtle_frame)
                                           ;
 
       float cell_center_x_in_img_meter = pose.x + cos(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
@@ -367,11 +370,18 @@ switch(path_image_.format()) {
       // }
 
       // ROS_ERROR("pose.x*meter_: {%f}", (float)(pose.x*meter_));
-      // float angle = (float)(((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2));
+      // float angle = (float)(((S_width_cells-cell_k)*S_cell_width_pixels-S_cell_width_pixels/2));
       // ROS_ERROR("angle scalar: {%f}", angle);
       if (req.show_matrix_cells_and_goal)
+        cv::putText(original_cv_points, //target image
+            std::to_string(cell_j)+std::string("_")+std::to_string(cell_k), //text
+            cv::Point(cell_center_x_in_img, cell_center_y_in_img), //top-left position
+            cv::FONT_HERSHEY_DUPLEX,
+            0.5,
+            CV_RGB(118, 185, 0), //font color
+            1); 
             cv::circle(original_cv_points,cv::Point((int)cell_center_x_in_img, (int)cell_center_y_in_img), 5, cv::Scalar(255,0,0));
-      // std::string file_name = "/tmp/S_cell_"+ std::to_string(cell_i) +"_"+ std::to_string(cell_j)+".jpg";
+      // std::string file_name = "/tmp/S_cell_"+ std::to_string(cell_k) +"_"+ std::to_string(cell_j)+".jpg";
       // cv::imwrite(file_name, S_cell_i_j);
       cv::Scalar mean;
       mean = cv::mean(S_cell_i_j);
@@ -392,7 +402,7 @@ switch(path_image_.format()) {
       if (req.show_matrix_cells_and_goal)
           cv::circle(original_cv_points,cv::Point(goal_x, goal_y), 5, cv::Scalar(0,255,0), -1);
       m_row.cells.push_back(cell);
-		  // ROS_ERROR("CELL_{%i}_{%i}: R={%f}, G={%f}, B={%f}", cell_i, cell_j, cell.red, cell.green, cell.blue);
+		  // ROS_ERROR("CELL_{%i}_{%i}: R={%f}, G={%f}, B={%f}", cell_k, cell_j, cell.red, cell.green, cell.blue);
 		  // ROS_ERROR("req.goal.x={%i}, req.goal.y={%i}", goal_x, goal_y);
     }
     res.m_rows.push_back(m_row);
@@ -411,10 +421,6 @@ switch(path_image_.format()) {
 	img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
 	res.image = img_msg;
-  //
-  //
-  //
-  //
 	return true;
 }
 

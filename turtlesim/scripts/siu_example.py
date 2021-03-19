@@ -49,7 +49,7 @@ if __name__ == "__main__":
     if VISUALIZE:
         fig = plt.figure(figsize=(16,12))
         
-        axR = fig.add_subplot(131)#plt.subplots(1,3)
+        axR = fig.add_subplot(141)#plt.subplots(1,3)
         fig.suptitle("RGB matrices")
         axR.set_title("R")
         im_r = axR.imshow(np.zeros((4,4)), norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
@@ -58,17 +58,24 @@ if __name__ == "__main__":
         divider = make_axes_locatable(axR)
         cax = divider.append_axes('right', size='5%', pad=0.1)
         fig.colorbar(im_r,cax=cax, orientation='vertical')
-        axG = fig.add_subplot(132)#plt.subplots(1,3)
+        axG = fig.add_subplot(142)#plt.subplots(1,3)
         axG.set_title("G")
         im_g = axG.imshow(np.zeros((4,4)), norm=plt.Normalize(vmin=0, vmax=255),cmap='hot')
         divider = make_axes_locatable(axG)
         cax = divider.append_axes('right', size='5%', pad=0.1)
         fig.colorbar(im_g,cax=cax, orientation='vertical')
-        axB = fig.add_subplot(133)#plt.subplots(1,3)
+        axB = fig.add_subplot(143)#plt.subplots(1,3)
         axB.set_title("B")
         divider = make_axes_locatable(axB)
         cax = divider.append_axes('right', size='5%', pad=0.1)
         im_b = axB.imshow(np.zeros((4,4)), norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
+        fig.colorbar(im_b,cax=cax, orientation='vertical')
+
+        axD = fig.add_subplot(144)#plt.subplots(1,3)
+        axD.set_title("D")
+        divider = make_axes_locatable(axD)
+        cax = divider.append_axes('right', size='5%', pad=0.1)
+        im_b = axD.imshow(np.zeros((4,4)), norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
         fig.colorbar(im_b,cax=cax, orientation='vertical')
         fig.tight_layout(pad=1)
     while not rospy.is_shutdown():
@@ -98,7 +105,7 @@ if __name__ == "__main__":
         # camera in front
         x_offset = 0
         #camera from above
-        # x_offset = -frame_pixel_size/2
+        x_offset = -frame_pixel_size/2
         # show_matrix_cells_and_goal -- show matrix cells in turtle world
         show_matrix_cells_and_goal = True
         img_response = turtle_api.readCamera(name='turtle1', frame_pixel_size = frame_pixel_size, cell_count=16, x_offset=x_offset, \
@@ -123,6 +130,7 @@ if __name__ == "__main__":
                 r_row[j] = cell.red
                 g_row[j] = cell.green
                 b_row[j] = cell.blue
+                dist_row[j] = cell.distance
                 print( "row:  {}", r_row)
                 print( "\tCELL_"+str(i)+"_"+str(j)+":" )
                 print( "\t\tR:  {}", cell.red)
@@ -133,12 +141,15 @@ if __name__ == "__main__":
             r_matrix[i]=r_row
             g_matrix[i]=g_row
             b_matrix[i]=b_row
+            dist_matrix[i]=dist_row
             i += 1
 
         if VISUALIZE:
             axR.imshow(r_matrix, norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
             axG.imshow(g_matrix, norm=plt.Normalize(vmin=0, vmax=255),cmap='hot')
             axB.imshow(b_matrix, norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
+            axB.imshow(b_matrix, norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
+            axD.imshow(dist_matrix, norm=plt.Normalize(),cmap='hot')
             # im_r = plt.imshow(r_matrix, norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
             # im_g = plt.imshow(g_matrix, norm=plt.Normalize(vmin=0, vmax=255),cmap='hot')
             # im_b = plt.imshow(b_matrix, norm=plt.Normalize(vmin=-1, vmax=1),cmap='hot')
