@@ -121,6 +121,11 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   }
 
   meter_ = turtle_images_[0].height();
+  if (!private_nh_.hasParam("pixels_meter_scale"))
+  {
+    private_nh_.setParam("/pixels_meter_scalar", meter_);
+  }
+  ROS_ERROR("Current scalar pixels/meter is: %f",meter_);
 
   clear();
 
@@ -137,7 +142,7 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
 
   width_in_meters_ = (width() - 1) / meter_;
   height_in_meters_ = (height() - 1) / meter_;
-  spawnTurtle("", width_in_meters_ / 2.0, height_in_meters_ / 2.0, 0);
+  // spawnTurtle("", width_in_meters_ / 2.0, height_in_meters_ / 2.0, 0);
 
   // spawn all available turtle types
   if(false)
@@ -320,6 +325,19 @@ switch(path_image_.format()) {
   std::vector<std::vector<float>> X;
   cv::Mat original_cv_points;
   original_cv.copyTo(original_cv_points);
+
+
+  // get turtles poses
+
+  std::map<std::string, Pose> poses;
+  std::map<std::string, TurtlePtr>::iterator it;
+
+  for (it = turtles_.begin(); it != turtles_.end(); it++)
+  {
+    if (it->first != req.name)
+      poses[it->first]= it->second->getPose();
+  }
+
   for (int cell_i = 0;cell_i<S_width_cells;cell_i++)
   {
     turtlesim::Mrow m_row;
@@ -335,6 +353,19 @@ switch(path_image_.format()) {
       float cell_center_y_in_img = pose.y*meter_ + cos(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
                                           - sin(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
                                           ;
+
+      float cell_center_x_in_img_meter = pose.x + cos(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
+                                          + sin(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+                                          ;
+      float cell_center_y_in_img_meter = pose.y + cos(pose.theta)*(cell_y_in_turtle_frame-req.frame_pixel_size/2)
+                                          - sin(pose.theta)*(cell_x_in_turtle_frame+req.x_offset)
+                                          ;
+      // for (int i = 0; i < poses.size(); ++i)
+      // {
+      //   if 
+      //   /* code */
+      // }
+
       // ROS_ERROR("pose.x*meter_: {%f}", (float)(pose.x*meter_));
       // float angle = (float)(((S_width_cells-cell_i)*S_cell_width_pixels-S_cell_width_pixels/2));
       // ROS_ERROR("angle scalar: {%f}", angle);
@@ -380,6 +411,10 @@ switch(path_image_.format()) {
 	img_bridge.toImageMsg(img_msg); // from cv_bridge to sensor_msgs::Image
 
 	res.image = img_msg;
+  //
+  //
+  //
+  //
 	return true;
 }
 

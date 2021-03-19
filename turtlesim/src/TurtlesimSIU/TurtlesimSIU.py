@@ -38,6 +38,7 @@ class TurtlesimSIU():
 		self.has_turtle = rospy.ServiceProxy('has_turtle', turtlesim.srv.HasTurtle)
 		self.kill_turtle = rospy.ServiceProxy('kill', turtlesim.srv.Kill)
 		self.vel_publishers = []
+		self.teleport_srvs = []
 
 	def getPose(self, turtle_name):
 		isinstance(turtle_name, str)
@@ -71,6 +72,8 @@ class TurtlesimSIU():
 		req = KillRequest()
 		req.name = turtle_name
 		print( self.kill_turtle(req))
+		self.vel_publishers = [i for i in self.vel_publishers if not (self.vel_publishers['name'] == turtle_name)]
+		self.teleport_srvs = [i for i in self.teleport_srvs if not (self.teleport_srvs['name'] == turtle_name)]
 		return 
 
 	def spawnTurtle(self, turtle_name, pose):
@@ -78,7 +81,11 @@ class TurtlesimSIU():
 		isinstance(turtle_name, str)
 		try:
 			vel_topic = '/'+turtle_name+'/cmd_vel'
+			abs_srv = '/'+turtle_name+'/teleport_absolute'
+			rel_srv = '/'+turtle_name+'/teleport_relative'
 			self.vel_publishers.append({'name': turtle_name, 'publisher': rospy.Publisher(vel_topic,Twist,queue_size=10)})
+			self.teleport_srvs.append({'name': turtle_name, 'absolute': rospy.ServiceProxy(abs_srv,turtlesim.srv.TeleportAbsolute),
+															'relative': rospy.ServiceProxy(rel_srv,turtlesim.srv.TeleportRelative)})
 			spawn_result = self.spawn(x=pose.x, y=pose.y, theta=pose.theta, name=turtle_name)
 			if spawn_result.name == turtle_name:
 				return True
@@ -127,12 +134,26 @@ class TurtlesimSIU():
 					if not reverse_collision in collisions and reverse_collision != collision:
 						collisions.append(collision)
 		return collisions
-			
-	def readColor(self, owner):
-		isinstance(fov_center, float)
-		isinstance(fov_range, float)
-		isinstance(range_min, float)
-		isinstance(range_max, float)
-		isinstance(owner, str)
-		sonar_result = self.get_sonar(fov_center, fov_range, range_min, range_max, owner)
-		return sonar_result.closes
+	
+	def setPose(self, turtle_name, pose, mode='absolute'):
+		isinstance(turtle_name, str)
+		isinstance(pose, Pose)
+		if mode not in ['absolute','relative']:
+			return False
+		elif mode == 'absolute':
+			req = turtlesim.srv.TeleportAbsoluteRequest()
+			req.x = pose.x
+			req.y = pose.y
+			req.theta = pose.theta
+		elif mode == 'relative':
+			req = turtlesim.srv.TeleportRelativeRequest()
+			req.linear = pose.x
+			req.angular = pose.theta
+		for record in self.teleport_srvs:
+			if turtle_name == record['name']:
+				record[mode](req)
+				return True
+		return False
+
+	def pixelsToScale(self):
+		return rospy.get_param("/pixels_meter_scale")
