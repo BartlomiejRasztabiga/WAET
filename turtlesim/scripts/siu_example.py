@@ -37,6 +37,7 @@ if __name__ == "__main__":
     if not turtle_api.hasTurtle('turtle1'):
         turtle_api.spawnTurtle('turtle1',turtlesim.msg.Pose(x=10,y=5,theta=0))
     color_api = TurtlesimSIU.ColorSensor('turtle1')
+    print turtle_api.pixelsToScale()
     #
     # translate and rotate afterwards
     #

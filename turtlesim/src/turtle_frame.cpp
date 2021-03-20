@@ -123,7 +123,7 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   meter_ = turtle_images_[0].height();
   if (!private_nh_.hasParam("pixels_meter_scale"))
   {
-    private_nh_.setParam("/pixels_meter_scalar", meter_);
+    private_nh_.setParam("/pixels_meter_scale", meter_);
   }
   ROS_ERROR("Current scalar pixels/meter is: %f",meter_);
 
