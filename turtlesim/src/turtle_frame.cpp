@@ -117,7 +117,7 @@ TurtleFrame::TurtleFrame(QWidget* parent, Qt::WindowFlags f)
   {
     QImage img;
     img.load(images_path + turtles[i]);
-    turtle_images_.append(img);
+    turtle_images_.append(img.scaled(turtle_images_[0].width()/2, turtle_images_[0].height()/2, Qt::KeepAspectRatio));
   }
 
   meter_ = turtle_images_[0].height();
