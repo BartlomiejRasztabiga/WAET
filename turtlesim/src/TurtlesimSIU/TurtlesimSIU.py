@@ -160,7 +160,7 @@ class TurtlesimSIU():
         @param x_offset  The offset in x direction (turtle front) of the camera localisation. If equals 0, the camera is in front of the turtle, and if equals -frame_pixel_size/2, the turtle is in the image center.
         @param goal  The goal of the turtle to calculate distance from each cell to the goal. It is given by turtlesim.msg.Pose(x,y,theta). 'x' and 'y' in meters, theta in radians.
         @param show_matrix_cells_and_goal Triggers visualisation of the cells, the goal and the turtle pose 
-        @return distance to the closes turtle in the given area
+        @return The NxN matrix, and each cell of the matrix has 4 fields: cell.red, cell.green, cell.blue, cell.distance. The latter is the distance to the specified goal.
         """
 		isinstance(name, str)
 		isinstance(frame_pixel_size, int)
