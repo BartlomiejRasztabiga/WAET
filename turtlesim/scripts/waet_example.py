@@ -8,13 +8,9 @@ from TurtlesimSIU import TurtlesimSIU
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 import math
-from cv_bridge import CvBridge
-import cv2
 import signal
 import sys
 import numpy as np
-import pylab as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 VISUALIZE = True
 
@@ -25,7 +21,6 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     # Initialize ROS node
     signal.signal(signal.SIGINT, signal_handler)
-    bridge = CvBridge()
     rospy.init_node('siu_example', anonymous=False)
     turtle_api = TurtlesimSIU.TurtlesimSIU()
     rate = rospy.Rate(1)
@@ -37,7 +32,7 @@ if __name__ == "__main__":
     if not turtle_api.hasTurtle('turtle1'):
         turtle_api.spawnTurtle('turtle1',turtlesim.msg.Pose(x=10,y=5,theta=0))
     color_api = TurtlesimSIU.ColorSensor('turtle1')
-    print turtle_api.pixelsToScale()
+    print (turtle_api.pixelsToScale())
     #
     # translate and rotate afterwards
     #
@@ -48,6 +43,7 @@ if __name__ == "__main__":
     turtle_api.setPose(turtle_name='turtle1', pose=turtlesim.msg.Pose(x=2,y=1,theta=1), mode='relative')
 
     while not rospy.is_shutdown():
+        turtle_api.setPose(turtle_name='turtle1', pose=turtlesim.msg.Pose(x=0.1,y=0.1,theta=0.2), mode='relative')
         print ('POSE:')
         print ('\t {}',turtle_api.getPose('turtle1').x)
         print ('\t {}',turtle_api.getPose('turtle1').y)
