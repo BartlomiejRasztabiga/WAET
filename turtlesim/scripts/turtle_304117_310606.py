@@ -204,7 +204,7 @@ if __name__ == "__main__":
         linear_velocity = float(sys.argv[1])
         rotation_velocity = float(sys.argv[2])
 
-    csv_file = open("data_304117_xxx.csv", "w")
+    csv_file = open("data_304117_310606.csv", "w")
     csv_writer = csv.writer(csv_file)
 
     # Initialize ROS node
