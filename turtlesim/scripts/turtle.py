@@ -27,6 +27,10 @@ refresh_rate = 10
 
 # RADIAN_CONVERSION = 0.0174532925
 CENTER_TURTLE = 'center_turtle'
+FL_TURTLE = 'front_left_turtle'
+FR_TURTLE = 'front_right_turtle'
+RL_TURTLE = 'rear_left_turtle'
+RR_TURTLE = 'rear_right_turtle'
 
 # state
 currently_pressed = []
@@ -67,27 +71,27 @@ def spawn_turtles():
     if turtle_api.hasTurtle(CENTER_TURTLE):
         turtle_api.killTurtle(CENTER_TURTLE)
     if not turtle_api.hasTurtle(CENTER_TURTLE):
-        turtle_api.spawnTurtle(CENTER_TURTLE, turtlesim.msg.Pose(x=center_x, y=center_y, theta=current_angle_in_rad))
+        turtle_api.spawnTurtle(CENTER_TURTLE, _get_center_pose())
 
-    # if turtle_api.hasTurtle('turtle2'):
-    #     turtle_api.killTurtle('turtle2')
-    # if not turtle_api.hasTurtle('turtle2'):
-    #     turtle_api.spawnTurtle('turtle2', turtlesim.msg.Pose(x=base_x + length // 2, y=base_y + width // 2, theta=0))
-    #
-    # if turtle_api.hasTurtle('turtle3'):
-    #     turtle_api.killTurtle('turtle3')
-    # if not turtle_api.hasTurtle('turtle3'):
-    #     turtle_api.spawnTurtle('turtle3', turtlesim.msg.Pose(x=base_x + length // 2, y=base_y - width // 2, theta=0))
-    #
-    # if turtle_api.hasTurtle('turtle4'):
-    #     turtle_api.killTurtle('turtle4')
-    # if not turtle_api.hasTurtle('turtle4'):
-    #     turtle_api.spawnTurtle('turtle4', turtlesim.msg.Pose(x=base_x - length // 2, y=base_y + width // 2, theta=0))
-    #
-    # if turtle_api.hasTurtle('turtle5'):
-    #     turtle_api.killTurtle('turtle5')
-    # if not turtle_api.hasTurtle('turtle5'):
-    #     turtle_api.spawnTurtle('turtle5', turtlesim.msg.Pose(x=base_x - length // 2, y=base_y - width // 2, theta=0))
+    if turtle_api.hasTurtle(FL_TURTLE):
+        turtle_api.killTurtle(FL_TURTLE)
+    if not turtle_api.hasTurtle(FL_TURTLE):
+        turtle_api.spawnTurtle(FL_TURTLE, _get_fl_pose())
+
+    if turtle_api.hasTurtle(FR_TURTLE):
+        turtle_api.killTurtle(FR_TURTLE)
+    if not turtle_api.hasTurtle(FR_TURTLE):
+        turtle_api.spawnTurtle(FR_TURTLE, _get_fr_pose())
+
+    if turtle_api.hasTurtle(RL_TURTLE):
+        turtle_api.killTurtle(RL_TURTLE)
+    if not turtle_api.hasTurtle(RL_TURTLE):
+        turtle_api.spawnTurtle(RL_TURTLE, _get_rl_pose())
+
+    if turtle_api.hasTurtle(RR_TURTLE):
+        turtle_api.killTurtle(RR_TURTLE)
+    if not turtle_api.hasTurtle(RR_TURTLE):
+        turtle_api.spawnTurtle(RR_TURTLE, _get_rr_pose())
 
 
 def move_turtles():
@@ -95,17 +99,24 @@ def move_turtles():
         key = currently_pressed[0]
         if key == 'w':
             move_forward()
-        elif key == 's':
-            move_backward()
         elif key == 'a':
             turn_left()
-        else:
+        elif key == 's':
+            move_backward()
+        elif key == 'd':
             turn_right()
 
 
 def render_turtles():
-    turtle_api.setPose(turtle_name=CENTER_TURTLE,
-                       pose=turtlesim.msg.Pose(x=center_x, y=center_y, theta=current_angle_in_rad), mode='absolute')
+    turtle_api.setPose(turtle_name=CENTER_TURTLE, pose=_get_center_pose(), mode='absolute')
+
+    turtle_api.setPose(turtle_name=FL_TURTLE, pose=_get_fl_pose(), mode='absolute')
+
+    turtle_api.setPose(turtle_name=FR_TURTLE, pose=_get_fr_pose(), mode='absolute')
+
+    turtle_api.setPose(turtle_name=RL_TURTLE, pose=_get_rl_pose(), mode='absolute')
+
+    turtle_api.setPose(turtle_name=RR_TURTLE, pose=_get_rr_pose(), mode='absolute')
 
 
 def move_forward():
@@ -130,6 +141,36 @@ def turn_right():
     rotation = rotation_velocity / refresh_rate
     global current_angle_in_rad
     current_angle_in_rad -= rotation
+
+
+def _get_center_pose():
+    return turtlesim.msg.Pose(x=center_x, y=center_y, theta=current_angle_in_rad)
+
+
+def _get_fl_pose():
+    displacement = _rotate_vector([length / 2, width / 2])
+    return _get_pose(displacement)
+
+
+def _get_fr_pose():
+    displacement = _rotate_vector([length / 2, -width / 2])
+    return _get_pose(displacement)
+
+
+def _get_rl_pose():
+    displacement = _rotate_vector([-length / 2, width / 2])
+    return _get_pose(displacement)
+
+
+def _get_rr_pose():
+    displacement = _rotate_vector([-length / 2, -width / 2])
+    return _get_pose(displacement)
+
+
+def _get_pose(displacement):
+    x = displacement[0] + center_x
+    y = displacement[1] + center_y
+    return turtlesim.msg.Pose(x=x, y=y, theta=current_angle_in_rad)
 
 
 def _move_center(displacement):
@@ -160,7 +201,7 @@ if __name__ == "__main__":
     rospy.init_node('siu_example', anonymous=False)
     turtle_api = TurtlesimSIU.TurtlesimSIU()
     rate = rospy.Rate(refresh_rate)
-    set_pen_req = turtlesim.srv.SetPenRequest(r=255, g=255, b=255, width=5, off=0)
+    set_pen_req = turtlesim.srv.SetPenRequest(r=255, g=0, b=0, width=3, off=0)
 
     spawn_turtles()
 
