@@ -5,10 +5,10 @@ main_dir=$PWD
 roslaunch turtlesim siu.launch &
 ros_pid=$!
 
-sleep 10
+sleep 3
 
 cd scripts
-python turtle.py
+python turtle.py 1 1
 cd $main_dir
 
 kill $ros_pid
