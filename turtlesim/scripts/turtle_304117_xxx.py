@@ -13,6 +13,7 @@ import math
 import signal
 import sys
 import numpy as np
+import csv
 
 # consts
 VISUALIZE = True
@@ -25,7 +26,6 @@ length = 4
 
 refresh_rate = 10
 
-# RADIAN_CONVERSION = 0.0174532925
 CENTER_TURTLE = 'center_turtle'
 FL_TURTLE = 'front_left_turtle'
 FR_TURTLE = 'front_right_turtle'
@@ -109,13 +109,9 @@ def move_turtles():
 
 def render_turtles():
     turtle_api.setPose(turtle_name=CENTER_TURTLE, pose=_get_center_pose(), mode='absolute')
-
     turtle_api.setPose(turtle_name=FL_TURTLE, pose=_get_fl_pose(), mode='absolute')
-
     turtle_api.setPose(turtle_name=FR_TURTLE, pose=_get_fr_pose(), mode='absolute')
-
     turtle_api.setPose(turtle_name=RL_TURTLE, pose=_get_rl_pose(), mode='absolute')
-
     turtle_api.setPose(turtle_name=RR_TURTLE, pose=_get_rr_pose(), mode='absolute')
 
 
@@ -188,6 +184,18 @@ def _rotate_vector(vector):
     return np.dot(rotation_matrix, vector).tolist()
 
 
+def write_positions_to_csv(_csv_writer):
+    center = _get_center_pose()
+    fl = _get_fl_pose()
+    fr = _get_fr_pose()
+    rl = _get_rl_pose()
+    rr = _get_rr_pose()
+
+    _csv_writer.writerow(
+        [fl.x, fl.y, fl.theta, fr.x, fr.y, fr.theta, rl.x, rl.y, rl.theta, rr.x, rr.y, rr.theta, center.x, center.y,
+         center.theta])
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Not enough arguments")
@@ -195,6 +203,9 @@ if __name__ == "__main__":
     else:
         linear_velocity = float(sys.argv[1])
         rotation_velocity = float(sys.argv[2])
+
+    csv_file = open("data_304117_xxx.csv", "w")
+    csv_writer = csv.writer(csv_file)
 
     # Initialize ROS node
     signal.signal(signal.SIGINT, signal_handler)
@@ -213,6 +224,9 @@ if __name__ == "__main__":
     while listener.running and not rospy.is_shutdown():
         move_turtles()
         render_turtles()
+        write_positions_to_csv(csv_writer)
 
         turtle_api.setPen('center_turtle', set_pen_req)
         rate.sleep()
+
+    csv_file.close()
