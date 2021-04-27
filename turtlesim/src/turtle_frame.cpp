@@ -46,8 +46,8 @@
 #define DEFAULT_BG_R 0x45
 #define DEFAULT_BG_G 0x56
 #define DEFAULT_BG_B 0xff
-#define DEFAULT_WIDTH 1920
-#define DEFAULT_HEIGHT 1080
+#define DEFAULT_WIDTH 960
+#define DEFAULT_HEIGHT 540
 #define DEFAULT_PNG "roads.png"
 #define DEFAULT_S_SIZE_CELLS 16
 #define CAMERA_FRAME_SIZE 200
